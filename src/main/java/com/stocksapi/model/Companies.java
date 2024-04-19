@@ -1,17 +1,10 @@
 package com.stocksapi.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
-import java.math.BigInteger;
+import javax.persistence.*;
 
 @Entity
 @Table(name = "companies", schema = "public")
@@ -28,7 +21,7 @@ public class Companies {
     private String name;
 
     @Column(name = "cnpj")
-    private String  cnpj;
+    private String cnpj;
 
     @Column(name = "ipo")
     private Integer ipo;
