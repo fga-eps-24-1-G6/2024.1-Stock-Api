@@ -17,7 +17,7 @@ public class StocksService {
     }
 
     public Stocks getStocksByTicker (String ticker) {
-        return stockRepository.findByTicker(ticker).orElseThrow(() -> new BadRequestNotFoundException());
+        return stockRepository.findByTicker(ticker).orElseThrow(BadRequestNotFoundException::new);
     }
 
 }
