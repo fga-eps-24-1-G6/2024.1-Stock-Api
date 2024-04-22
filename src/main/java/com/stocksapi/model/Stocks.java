@@ -1,17 +1,18 @@
 package com.stocksapi.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
 import java.math.BigDecimal;
 
 @Entity
 @Table(name = "stocks", schema = "public")
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class Stocks {
 
     @Id
@@ -33,4 +34,40 @@ public class Stocks {
 
     @Column(name = "avg_daily_liquidity")
     private Long avgDailyLiquidity;
+
+    public Stocks(Integer id, String ticker, Companies companies, BigDecimal freeFloat, BigDecimal tagAlong, Long avgDailyLiquidity) {
+        this.id = id;
+        this.ticker = ticker;
+        this.companies = companies;
+        this.freeFloat = freeFloat;
+        this.tagAlong = tagAlong;
+        this.avgDailyLiquidity = avgDailyLiquidity;
+    }
+
+    public Stocks() {
+    }
+
+    public Integer getId() {
+        return id;
+    }
+
+    public String getTicker() {
+        return ticker;
+    }
+
+    public Companies getCompanies() {
+        return companies;
+    }
+
+    public BigDecimal getFreeFloat() {
+        return freeFloat;
+    }
+
+    public BigDecimal getTagAlong() {
+        return tagAlong;
+    }
+
+    public Long getAvgDailyLiquidity() {
+        return avgDailyLiquidity;
+    }
 }

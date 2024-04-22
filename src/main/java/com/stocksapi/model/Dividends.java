@@ -1,9 +1,5 @@
 package com.stocksapi.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import javax.persistence.Column;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
@@ -12,9 +8,6 @@ import java.math.BigDecimal;
 import java.util.Date;
 
 @Table(name = "dividends", schema = "public")
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class Dividends {
     @ManyToOne
     @JoinColumn(name = "stocks_id", nullable = false)
