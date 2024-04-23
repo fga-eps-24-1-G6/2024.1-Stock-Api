@@ -9,6 +9,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 
 @Entity
 @Table(name = "stocks", schema = "public")
@@ -32,9 +33,9 @@ public class Stocks {
     private BigDecimal tagAlong;
 
     @Column(name = "avg_daily_liquidity")
-    private Long avgDailyLiquidity;
+    private BigInteger avgDailyLiquidity;
 
-    public Stocks(Integer id, String ticker, Companies companies, BigDecimal freeFloat, BigDecimal tagAlong, Long avgDailyLiquidity) {
+    public Stocks(Integer id, String ticker, Companies companies, BigDecimal freeFloat, BigDecimal tagAlong, BigInteger avgDailyLiquidity) {
         this.id = id;
         this.ticker = ticker;
         this.companies = companies;
@@ -66,7 +67,7 @@ public class Stocks {
         return tagAlong;
     }
 
-    public Long getAvgDailyLiquidity() {
+    public BigInteger getAvgDailyLiquidity() {
         return avgDailyLiquidity;
     }
 }

@@ -47,7 +47,7 @@ public class StocksService {
             BigDecimal priceTwelveMonthsAgo = getPriceXMonthsAgo(findAllPrices, 12);
             BigDecimal variationTwelveMonths = calculateVariation(currentPrice, priceTwelveMonthsAgo);
 
-            StocksResponse stocksResponse = new StocksResponse(optStocks.get(), optPrices.get(), categorie, variationOneDay, variationOneMonth, variationTwelveMonths);
+            StocksResponse stocksResponse = new StocksResponse(optStocks.get(), optPrices.get(), categorie, variationOneDay, variationOneMonth, variationTwelveMonths, optStocks.get().getCompanies().getName());
             return stocksResponse;
         }
         throw new BadRequestNotFoundException(404, "Could not find stocks with ticker " + ticker);

@@ -1,2 +1,2 @@
 ### Stocks - Get by ticker
-GET {{server}}/api/stocks/stock-summary/petr45
+GET {{server}}/api/stocks/stock-summary/petr4
