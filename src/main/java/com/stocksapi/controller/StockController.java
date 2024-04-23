@@ -1,7 +1,9 @@
 package com.stocksapi.controller;
 
+import com.stocksapi.dto.ExceptionResponse;
 import com.stocksapi.exception.BadRequestNotFoundException;
 import com.stocksapi.service.StocksService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,11 +23,13 @@ public class StockController {
     @GetMapping(value = "/stock-summary/{ticker}")
     public ResponseEntity<?> getStocksByTicker(@PathVariable String ticker) {
         try {
+            // Aqui, ao invés de retornar a resposta do serviço diretamente,
+            // você pode encapsular em um ResponseEntity com HttpStatus OK.
             return ResponseEntity.ok(stocksService.getStocksByTicker(ticker));
-        } catch (BadRequestNotFoundException exception)
-        {
-            return ResponseEntity.badRequest().body(exception.getMensagem());
+        } catch (BadRequestNotFoundException exception) {
+            int errorCode = 404;
+            String message = "Could not find stocks with ticker: " + ticker;
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ExceptionResponse(errorCode, message));
         }
-
     }
 }

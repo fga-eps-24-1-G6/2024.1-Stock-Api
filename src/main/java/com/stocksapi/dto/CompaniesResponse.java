@@ -2,13 +2,15 @@ package com.stocksapi.dto;
 
 import com.stocksapi.model.Companies;
 
+import java.math.BigDecimal;
+
 public class CompaniesResponse {
     private Integer id;
     private String name;
     private String cnpj;
     private Integer ipo;
     private Integer foundationYear;
-    private Long firmValue;
+    private BigDecimal firmValue;
     private Long numberOfPapers;
     private String marketSegment;
     private String sector;
@@ -32,7 +34,7 @@ public class CompaniesResponse {
         return cnpj;
     }
 
-    public Long getFirmValue() {
+    public BigDecimal getFirmValue() {
         return firmValue;
     }
 

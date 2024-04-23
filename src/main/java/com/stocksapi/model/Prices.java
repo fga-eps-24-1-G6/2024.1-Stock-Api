@@ -9,7 +9,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.LocalDate;
 
 @Table(name = "prices", schema = "public")
 @Entity
@@ -23,22 +23,23 @@ public class Prices {
     private BigDecimal value;
 
     @Column(name = "price_date")
-    private Date priceDate;
+    private LocalDate priceDate;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Integer id;
 
     public Prices() {
     }
 
-    public Prices(Date priceDate, Stocks stocks, BigDecimal value) {
+    public Prices(LocalDate priceDate, Stocks stocks, BigDecimal value, Integer id) {
         this.priceDate = priceDate;
         this.stocks = stocks;
         this.value = value;
+        this.id = id;
     }
 
-    public Date getPriceDate() {
+    public LocalDate getPriceDate() {
         return priceDate;
     }
 
@@ -48,5 +49,9 @@ public class Prices {
 
     public BigDecimal getValue() {
         return value;
+    }
+
+    public Integer getId() {
+        return id;
     }
 }

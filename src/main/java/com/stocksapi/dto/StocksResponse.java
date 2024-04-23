@@ -12,14 +12,39 @@ public class StocksResponse {
     private BigDecimal freeFloat;
     private BigDecimal tagAlong;
     private Long avgDailyLiquidity;
+    private String categorie;
+    private BigDecimal variationOneDay;
+    private BigDecimal variationOneMonth;
+    private BigDecimal variationTwelveMonths;
 
-    public StocksResponse(Stocks stocks, Prices prices) {
+
+    public StocksResponse(Stocks stocks, Prices prices, String categorie, BigDecimal variationOneDay, BigDecimal variationOneMonth, BigDecimal variationTwelveMonths) {
         this.ticker = stocks.getTicker();
         this.companyName = new CompaniesResponse(stocks.getCompanies()).getName();
         this.currentPrice = new PricesResponse(prices).getValue();
         this.freeFloat = stocks.getFreeFloat();
         this.tagAlong = stocks.getTagAlong();
         this.avgDailyLiquidity = stocks.getAvgDailyLiquidity();
+        this.categorie = categorie;
+        this.variationOneDay = variationOneDay;
+        this.variationOneMonth = variationOneMonth;
+        this.variationTwelveMonths = variationTwelveMonths;
+    }
+
+    public Long getAvgDailyLiquidity() {
+        return avgDailyLiquidity;
+    }
+
+    public String getCategorie() {
+        return categorie;
+    }
+
+    public String getCompanyName() {
+        return companyName;
+    }
+
+    public BigDecimal getCurrentPrice() {
+        return currentPrice;
     }
 
     public BigDecimal getFreeFloat() {
@@ -30,19 +55,19 @@ public class StocksResponse {
         return tagAlong;
     }
 
-    public Long getAvgDailyLiquidity() {
-        return avgDailyLiquidity;
-    }
-
     public String getTicker() {
         return ticker;
     }
 
-    public String getCompanyName() {
-        return companyName;
+    public BigDecimal getVariationOneDay() {
+        return variationOneDay;
     }
 
-    public BigDecimal getCurrentPrice() {
-        return currentPrice;
+    public BigDecimal getVariationOneMonth() {
+        return variationOneMonth;
+    }
+
+    public BigDecimal getVariationTwelveMonths() {
+        return variationTwelveMonths;
     }
 }

@@ -6,6 +6,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import java.math.BigDecimal;
 
 @Entity
 @Table(name = "companies", schema = "public")
@@ -28,7 +29,7 @@ public class Companies {
     private Integer foundationYear;
 
     @Column(name = "firm_value")
-    private Long firmValue;
+    private BigDecimal firmValue;
 
     @Column(name = "number_of_papers")
     private Long numberOfPapers;
@@ -42,7 +43,7 @@ public class Companies {
     public Companies() {
     }
 
-    public Companies(String cnpj, Long firmValue, Integer foundationYear, Integer id, Integer ipo, String marketSegment, String name, Long numberOfPapers, String sector, String segment) {
+    public Companies(String cnpj, BigDecimal firmValue, Integer foundationYear, Integer id, Integer ipo, String marketSegment, String name, Long numberOfPapers, String sector, String segment) {
         this.cnpj = cnpj;
         this.firmValue = firmValue;
         this.foundationYear = foundationYear;
@@ -59,7 +60,7 @@ public class Companies {
         return cnpj;
     }
 
-    public Long getFirmValue() {
+    public BigDecimal getFirmValue() {
         return firmValue;
     }
 

@@ -3,12 +3,12 @@ package com.stocksapi.dto;
 import com.stocksapi.model.Prices;
 
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.LocalDate;
 
 public class PricesResponse {
 
     private BigDecimal value;
-    private Date priceDate;
+    private LocalDate priceDate;
 
 
     public PricesResponse(Prices prices){
@@ -21,7 +21,7 @@ public class PricesResponse {
         return value;
     }
 
-    public Date getPriceDate() {
+    public LocalDate getPriceDate() {
         return priceDate;
     }
 }

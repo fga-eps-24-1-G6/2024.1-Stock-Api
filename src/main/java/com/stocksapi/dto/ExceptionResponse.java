@@ -1,12 +1,11 @@
-package com.stocksapi.exception;
+package com.stocksapi.dto;
 
-public class BadRequestNotFoundException extends RuntimeException {
+public class ExceptionResponse {
 
     private final int errorCode;
     private final String message;
 
-    public BadRequestNotFoundException(int errorCode, String message) {
-        super(message);
+    public ExceptionResponse(int errorCode, String message) {
         this.errorCode = errorCode;
         this.message = message;
     }
