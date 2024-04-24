@@ -3,59 +3,36 @@ package com.stocksapi.dto;
 import com.stocksapi.model.Companies;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 
 public class CompaniesResponse {
-    private Integer id;
-    private String name;
-    private String cnpj;
     private Integer ipo;
-    private Integer foundationYear;
-    private BigDecimal firmValue;
-    private Long numberOfPapers;
-    private String marketSegment;
     private String sector;
     private String segment;
+    private BigDecimal marketValue;
+    private BigInteger equity;
+    private Long numberOfPapers;
 
-    public CompaniesResponse (Companies companies){
-        this.id = companies.getId();
-        this.name = companies.getName();
-        this.cnpj = companies.getCnpj();
+
+    public CompaniesResponse(Companies companies, BigDecimal marketValue, BigInteger equity) {
         this.ipo = companies.getIpo();
-        this.foundationYear = companies.getFoundationYear();
-        this.firmValue = companies.getFirmValue();
-        this.numberOfPapers = companies.getNumberOfPapers();
-        this.marketSegment = companies.getMarketSegment();
         this.sector = companies.getSector();
         this.segment = companies.getSegment();
-
+        this.marketValue = marketValue;
+        this.equity = equity;
+        this.numberOfPapers = companies.getNumberOfPapers();
     }
 
-    public String getCnpj() {
-        return cnpj;
-    }
-
-    public BigDecimal getFirmValue() {
-        return firmValue;
-    }
-
-    public Integer getFoundationYear() {
-        return foundationYear;
-    }
-
-    public Integer getId() {
-        return id;
+    public BigInteger getEquity() {
+        return equity;
     }
 
     public Integer getIpo() {
         return ipo;
     }
 
-    public String getMarketSegment() {
-        return marketSegment;
-    }
-
-    public String getName() {
-        return name;
+    public BigDecimal getMarketValue() {
+        return marketValue;
     }
 
     public Long getNumberOfPapers() {

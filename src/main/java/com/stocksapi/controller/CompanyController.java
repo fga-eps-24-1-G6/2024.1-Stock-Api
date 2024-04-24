@@ -2,7 +2,7 @@ package com.stocksapi.controller;
 
 import com.stocksapi.dto.ExceptionResponse;
 import com.stocksapi.exception.BadRequestNotFoundException;
-import com.stocksapi.service.StocksService;
+import com.stocksapi.service.CompaniesService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,22 +11,23 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/stocks")
-public class StockController {
+@RequestMapping("/api/company")
+public class CompanyController {
 
-    private final StocksService stocksService;
+    private final CompaniesService companiesService;
 
-    public StockController(StocksService stocksService) {
-        this.stocksService = stocksService;
+    public CompanyController(CompaniesService companiesService) {
+        this.companiesService = companiesService;
     }
 
-    @GetMapping(value = "/stock-summary/{ticker}")
-    public ResponseEntity<?> getStocksByTicker(@PathVariable String ticker) {
+
+    @GetMapping(value = "/company-info/{id}")
+    public ResponseEntity<?> getCompanyByTicker(@PathVariable Integer id) {
         try {
-            return ResponseEntity.ok(stocksService.getStocksByTicker(ticker));
+            return ResponseEntity.ok(companiesService.getById(id));
         } catch (BadRequestNotFoundException exception) {
             int errorCode = 404;
-            String message = "Could not find stocks with ticker: " + ticker;
+            String message = "Could not find company with id: " + id;
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ExceptionResponse(errorCode, message));
         }
     }

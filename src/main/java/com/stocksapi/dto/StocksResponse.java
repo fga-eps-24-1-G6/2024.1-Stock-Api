@@ -4,6 +4,7 @@ import com.stocksapi.model.Prices;
 import com.stocksapi.model.Stocks;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 
 public class StocksResponse {
     private String ticker;
@@ -11,16 +12,16 @@ public class StocksResponse {
     private String companyName;
     private BigDecimal freeFloat;
     private BigDecimal tagAlong;
-    private Long avgDailyLiquidity;
+    private BigInteger avgDailyLiquidity;
     private String categorie;
     private BigDecimal variationOneDay;
     private BigDecimal variationOneMonth;
     private BigDecimal variationTwelveMonths;
 
 
-    public StocksResponse(Stocks stocks, Prices prices, String categorie, BigDecimal variationOneDay, BigDecimal variationOneMonth, BigDecimal variationTwelveMonths) {
+    public StocksResponse(Stocks stocks, Prices prices, String categorie, BigDecimal variationOneDay, BigDecimal variationOneMonth, BigDecimal variationTwelveMonths, String companyName) {
         this.ticker = stocks.getTicker();
-        this.companyName = new CompaniesResponse(stocks.getCompanies()).getName();
+        this.companyName = companyName;
         this.currentPrice = new PricesResponse(prices).getValue();
         this.freeFloat = stocks.getFreeFloat();
         this.tagAlong = stocks.getTagAlong();
@@ -31,7 +32,7 @@ public class StocksResponse {
         this.variationTwelveMonths = variationTwelveMonths;
     }
 
-    public Long getAvgDailyLiquidity() {
+    public BigInteger getAvgDailyLiquidity() {
         return avgDailyLiquidity;
     }
 
