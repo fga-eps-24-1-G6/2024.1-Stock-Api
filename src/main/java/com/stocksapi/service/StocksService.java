@@ -27,14 +27,14 @@ public class StocksService {
     public StocksResponse getStocksByTicker (String ticker) {
         Optional<Stocks> optStocks = stockRepository.findByTicker(ticker);
         if (optStocks.isPresent()) {
-            Optional<Prices> optPrices = priceRepository.findLatestPriceByStocksId(optStocks.get().getId());
+            Optional<Prices> optPrices = priceRepository.findLatestPriceByStockId(optStocks.get().getId());
             String categorie = "LARGE";
             BigDecimal tenBillion = new BigDecimal("10000000000");
             int comnpareTo = tenBillion.compareTo(optStocks.get().getCompanies().getFirmValue());
             if (comnpareTo < 0) {
                 categorie = "SMALL";
             }
-            List<Prices> findAllPrices = priceRepository.findAllByStocksIdOrderByPriceDate(optStocks.get().getId());
+            List<Prices> findAllPrices = priceRepository.findAllByStockIdOrderByPriceDate(optStocks.get().getId());
 
             BigDecimal currentPrice = findAllPrices.get(findAllPrices.size() - 1).getValue();
             BigDecimal priceOneDayAgo = getPriceXDaysAgo(findAllPrices, 1);

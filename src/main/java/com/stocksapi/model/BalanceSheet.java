@@ -2,6 +2,7 @@ package com.stocksapi.model;
 
 
 import javax.persistence.Column;
+import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -10,23 +11,17 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import java.math.BigInteger;
+import java.math.BigInteger;
 
 @Entity
 @Table(name = "balance_sheets", schema = "public")
 public class BalanceSheet {
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    private Integer id;
+    @EmbeddedId
+    private BalanceSheetId id;
 
     @ManyToOne
-    @JoinColumn(name = "company_id", nullable = false)
+    @JoinColumn(name = "company_id", insertable = false, updatable = false)
     private Companies companies;
-
-    @Column(name = "year")
-    private Integer year;
-
-    @Column(name = "quarter")
-    private Integer quarter;
 
     @Column(name = "net_revenue")
     private BigInteger netRevenue;
@@ -70,7 +65,7 @@ public class BalanceSheet {
     public BalanceSheet() {
     }
 
-    public BalanceSheet(BigInteger assets, BigInteger cash, Companies companies, BigInteger costs, BigInteger ebit, BigInteger ebitda, BigInteger equity, BigInteger grossDebt, BigInteger grossProfit, Integer id, BigInteger liabilities, BigInteger netDebt, BigInteger netProfit, BigInteger netRevenue, Integer quarter, BigInteger taxes, Integer year) {
+    public BalanceSheet(BigInteger assets, BigInteger cash, Companies companies, BigInteger costs, BigInteger ebit, BigInteger ebitda, BigInteger equity, BigInteger grossDebt, BigInteger grossProfit, BalanceSheetId id, BigInteger liabilities, BigInteger netDebt, BigInteger netProfit, BigInteger netRevenue, BigInteger taxes) {
         this.assets = assets;
         this.cash = cash;
         this.companies = companies;
@@ -85,9 +80,7 @@ public class BalanceSheet {
         this.netDebt = netDebt;
         this.netProfit = netProfit;
         this.netRevenue = netRevenue;
-        this.quarter = quarter;
         this.taxes = taxes;
-        this.year = year;
     }
 
     public BigInteger getAssets() {
@@ -126,7 +119,7 @@ public class BalanceSheet {
         return grossProfit;
     }
 
-    public Integer getId() {
+    public BalanceSheetId getId() {
         return id;
     }
 
@@ -146,15 +139,7 @@ public class BalanceSheet {
         return netRevenue;
     }
 
-    public Integer getQuarter() {
-        return quarter;
-    }
-
     public BigInteger getTaxes() {
         return taxes;
-    }
-
-    public Integer getYear() {
-        return year;
     }
 }

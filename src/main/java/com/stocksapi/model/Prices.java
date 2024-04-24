@@ -5,8 +5,6 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -15,43 +13,35 @@ import java.time.LocalDate;
 @Entity
 public class Prices {
 
-    @ManyToOne
-    @JoinColumn(name = "stock_id", nullable = false)
-    private Stocks stocks;
-
-    @Column(name = "value")
-    private BigDecimal value;
-
-    @Column(name = "price_date")
-    private LocalDate priceDate;
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    @Column(name = "stock_id")
+    private Integer stockId;
+
+    @Column(name = "value", nullable = false)
+    private BigDecimal value;
+
+    @Column(name = "price_date", nullable = false)
+    private LocalDate priceDate;
 
     public Prices() {
     }
 
-    public Prices(LocalDate priceDate, Stocks stocks, BigDecimal value, Integer id) {
+    public Prices(LocalDate priceDate, Integer stockId, BigDecimal value) {
         this.priceDate = priceDate;
-        this.stocks = stocks;
+        this.stockId = stockId;
         this.value = value;
-        this.id = id;
     }
 
     public LocalDate getPriceDate() {
         return priceDate;
     }
 
-    public Stocks getStocks() {
-        return stocks;
+    public Integer getStockId() {
+        return stockId;
     }
 
     public BigDecimal getValue() {
         return value;
-    }
-
-    public Integer getId() {
-        return id;
     }
 }
