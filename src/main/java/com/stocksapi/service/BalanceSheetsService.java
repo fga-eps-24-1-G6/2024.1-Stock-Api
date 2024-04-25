@@ -36,7 +36,7 @@ public class BalanceSheetsService {
             List<YearlyValuesResponse> netDebtList = new ArrayList<YearlyValuesResponse>();
             List<YearlyValuesResponse> grossMarginList = new ArrayList<YearlyValuesResponse>();
             List<YearlyValuesResponse> netMarginList = new ArrayList<YearlyValuesResponse>();
-            // Falta Patrimônio Líquido
+            List<YearlyValuesResponse> equityList = new ArrayList<YearlyValuesResponse>();
             List<YearlyValuesResponse> assetsList = new ArrayList<YearlyValuesResponse>();
             List<YearlyValuesResponse> liabilitiesList = new ArrayList<YearlyValuesResponse>();
 
@@ -101,7 +101,10 @@ public class BalanceSheetsService {
                 BalanceSheetsResponse balanceSheetsNetMarginResponse = new BalanceSheetsResponse("Margem Líquida", netMarginList);
                 balanceSheetsResponseList.add(balanceSheetsNetMarginResponse);
 
-                // Falta Patrimônio Líquido
+                YearlyValuesResponse equityResponse = new YearlyValuesResponse(balanceSheet.getEquity(), balanceSheet.getId().getYear());
+                equityList.add(equityResponse);
+                BalanceSheetsResponse balanceSheetsEquityResponse = new BalanceSheetsResponse("Patrimônio Líquido", equityList);
+                balanceSheetsResponseList.add(balanceSheetsEquityResponse);
 
                 YearlyValuesResponse assetsResponse = new YearlyValuesResponse(balanceSheet.getAssets(), balanceSheet.getId().getYear());
                 assetsList.add(assetsResponse);
