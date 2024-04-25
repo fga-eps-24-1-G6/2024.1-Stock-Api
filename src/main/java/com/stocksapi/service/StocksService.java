@@ -34,7 +34,7 @@ public class StocksService {
             if (comnpareTo < 0) {
                 categorie = "SMALL";
             }
-            List<Prices> findAllPrices = priceRepository.findAllByStockIdOrderByPriceDate(optStocks.get().getId());
+            List<Prices> findAllPrices = priceRepository.findAllByStockIdIdOrderByPriceDate(optStocks.get().getId());
 
             BigDecimal currentPrice = findAllPrices.get(findAllPrices.size() - 1).getValue();
             BigDecimal priceOneDayAgo = getPriceXDaysAgo(findAllPrices, 1);

@@ -41,4 +41,16 @@ public class BalanceSheetId implements Serializable {
     public int hashCode() {
         return Objects.hash(companyId, year, quarter);
     }
+
+    public Long getCompanyId() {
+        return companyId;
+    }
+
+    public Integer getQuarter() {
+        return quarter;
+    }
+
+    public Integer getYear() {
+        return year;
+    }
 }
