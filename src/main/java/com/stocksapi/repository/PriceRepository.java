@@ -8,8 +8,8 @@ import java.util.List;
 import java.util.Optional;
 
 public interface PriceRepository extends JpaRepository<Prices, Integer> {
-    @Query("SELECT p FROM Prices p WHERE p.stocks.id = :id AND p.priceDate = (SELECT MAX(p2.priceDate) FROM Prices p2 WHERE p2.stocks.id = :id)")
-    Optional<Prices> findLatestPriceByStocksId(Integer id);
+    @Query("SELECT p FROM Prices p WHERE p.stockId.id = :id AND p.id = (SELECT MAX(p2.id) FROM Prices p2 WHERE p2.stockId.id = :id)")
+    Optional<Prices> findLatestPriceByStockId(Integer id);
 
-    List<Prices> findAllByStocksIdOrderByPriceDate(Integer id);
+    List<Prices> findAllByStockIdIdOrderByPriceDate(Integer id);
 }

@@ -17,12 +17,12 @@ public class Prices {
 
     @ManyToOne
     @JoinColumn(name = "stock_id", nullable = false)
-    private Stocks stocks;
+    private Stocks stockId;
 
-    @Column(name = "value")
+    @Column(name = "value", nullable = false)
     private BigDecimal value;
 
-    @Column(name = "price_date")
+    @Column(name = "price_date", nullable = false)
     private LocalDate priceDate;
 
     @Id
@@ -32,26 +32,26 @@ public class Prices {
     public Prices() {
     }
 
-    public Prices(LocalDate priceDate, Stocks stocks, BigDecimal value, Integer id) {
-        this.priceDate = priceDate;
-        this.stocks = stocks;
-        this.value = value;
+    public Prices(Integer id, LocalDate priceDate, Stocks stockId, BigDecimal value) {
         this.id = id;
+        this.priceDate = priceDate;
+        this.stockId = stockId;
+        this.value = value;
+    }
+
+    public Integer getId() {
+        return id;
     }
 
     public LocalDate getPriceDate() {
         return priceDate;
     }
 
-    public Stocks getStocks() {
-        return stocks;
+    public Stocks getStockId() {
+        return stockId;
     }
 
     public BigDecimal getValue() {
         return value;
-    }
-
-    public Integer getId() {
-        return id;
     }
 }

@@ -2,6 +2,7 @@ package com.stocksapi.model;
 
 
 import javax.persistence.Column;
+import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -9,68 +10,62 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
-import java.math.BigInteger;
+import java.math.BigDecimal;
+import java.math.BigDecimal;
 
 @Entity
 @Table(name = "balance_sheets", schema = "public")
 public class BalanceSheet {
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    private Integer id;
+    @EmbeddedId
+    private BalanceSheetId id;
 
     @ManyToOne
-    @JoinColumn(name = "company_id", nullable = false)
+    @JoinColumn(name = "company_id", insertable = false, updatable = false)
     private Companies companies;
 
-    @Column(name = "year")
-    private Integer year;
-
-    @Column(name = "quarter")
-    private Integer quarter;
-
     @Column(name = "net_revenue")
-    private BigInteger netRevenue;
+    private BigDecimal netRevenue;
 
     @Column(name = "costs")
-    private BigInteger costs;
+    private BigDecimal costs;
 
     @Column(name = "gross_profit")
-    private BigInteger grossProfit;
+    private BigDecimal grossProfit;
 
     @Column(name = "net_profit")
-    private BigInteger netProfit;
+    private BigDecimal netProfit;
 
     @Column(name = "ebitda")
-    private BigInteger ebitda;
+    private BigDecimal ebitda;
 
     @Column(name = "ebit")
-    private BigInteger ebit;
+    private BigDecimal ebit;
 
     @Column(name = "taxes")
-    private BigInteger taxes;
+    private BigDecimal taxes;
 
     @Column(name = "gross_debt")
-    private BigInteger grossDebt;
+    private BigDecimal grossDebt;
 
     @Column(name = "net_debt")
-    private BigInteger netDebt;
+    private BigDecimal netDebt;
 
     @Column(name = "equity")
-    private BigInteger equity;
+    private BigDecimal equity;
 
     @Column(name = "cash")
-    private BigInteger cash;
+    private BigDecimal cash;
 
     @Column(name = "assets")
-    private BigInteger assets;
+    private BigDecimal assets;
 
     @Column(name = "liabilities")
-    private BigInteger liabilities;
+    private BigDecimal liabilities;
 
     public BalanceSheet() {
     }
 
-    public BalanceSheet(BigInteger assets, BigInteger cash, Companies companies, BigInteger costs, BigInteger ebit, BigInteger ebitda, BigInteger equity, BigInteger grossDebt, BigInteger grossProfit, Integer id, BigInteger liabilities, BigInteger netDebt, BigInteger netProfit, BigInteger netRevenue, Integer quarter, BigInteger taxes, Integer year) {
+    public BalanceSheet(BigDecimal assets, BigDecimal cash, Companies companies, BigDecimal costs, BigDecimal ebit, BigDecimal ebitda, BigDecimal equity, BigDecimal grossDebt, BigDecimal grossProfit, BalanceSheetId id, BigDecimal liabilities, BigDecimal netDebt, BigDecimal netProfit, BigDecimal netRevenue, BigDecimal taxes) {
         this.assets = assets;
         this.cash = cash;
         this.companies = companies;
@@ -85,16 +80,14 @@ public class BalanceSheet {
         this.netDebt = netDebt;
         this.netProfit = netProfit;
         this.netRevenue = netRevenue;
-        this.quarter = quarter;
         this.taxes = taxes;
-        this.year = year;
     }
 
-    public BigInteger getAssets() {
+    public BigDecimal getAssets() {
         return assets;
     }
 
-    public BigInteger getCash() {
+    public BigDecimal getCash() {
         return cash;
     }
 
@@ -102,59 +95,51 @@ public class BalanceSheet {
         return companies;
     }
 
-    public BigInteger getCosts() {
+    public BigDecimal getCosts() {
         return costs;
     }
 
-    public BigInteger getEbit() {
+    public BigDecimal getEbit() {
         return ebit;
     }
 
-    public BigInteger getEbitda() {
+    public BigDecimal getEbitda() {
         return ebitda;
     }
 
-    public BigInteger getEquity() {
+    public BigDecimal getEquity() {
         return equity;
     }
 
-    public BigInteger getGrossDebt() {
+    public BigDecimal getGrossDebt() {
         return grossDebt;
     }
 
-    public BigInteger getGrossProfit() {
+    public BigDecimal getGrossProfit() {
         return grossProfit;
     }
 
-    public Integer getId() {
+    public BalanceSheetId getId() {
         return id;
     }
 
-    public BigInteger getLiabilities() {
+    public BigDecimal getLiabilities() {
         return liabilities;
     }
 
-    public BigInteger getNetDebt() {
+    public BigDecimal getNetDebt() {
         return netDebt;
     }
 
-    public BigInteger getNetProfit() {
+    public BigDecimal getNetProfit() {
         return netProfit;
     }
 
-    public BigInteger getNetRevenue() {
+    public BigDecimal getNetRevenue() {
         return netRevenue;
     }
 
-    public Integer getQuarter() {
-        return quarter;
-    }
-
-    public BigInteger getTaxes() {
+    public BigDecimal getTaxes() {
         return taxes;
-    }
-
-    public Integer getYear() {
-        return year;
     }
 }

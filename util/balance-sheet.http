@@ -1,0 +1,2 @@
+### Balance Sheets - Get by Company Id
+GET {{server}}/api/balance-sheet/1

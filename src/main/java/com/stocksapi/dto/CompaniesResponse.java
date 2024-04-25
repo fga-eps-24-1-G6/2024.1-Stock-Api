@@ -10,11 +10,11 @@ public class CompaniesResponse {
     private String sector;
     private String segment;
     private BigDecimal marketValue;
-    private BigInteger equity;
+    private BigDecimal equity;
     private Long numberOfPapers;
 
 
-    public CompaniesResponse(Companies companies, BigDecimal marketValue, BigInteger equity) {
+    public CompaniesResponse(Companies companies, BigDecimal marketValue, BigDecimal equity) {
         this.ipo = companies.getIpo();
         this.sector = companies.getSector();
         this.segment = companies.getSegment();
@@ -23,7 +23,7 @@ public class CompaniesResponse {
         this.numberOfPapers = companies.getNumberOfPapers();
     }
 
-    public BigInteger getEquity() {
+    public BigDecimal getEquity() {
         return equity;
     }
 
