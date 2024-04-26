@@ -30,4 +30,15 @@ public class StockController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ExceptionResponse(errorCode, message));
         }
     }
+
+    @GetMapping(value = "/indicators/{ticker}")
+    public ResponseEntity<?> getIndicatorsFromStocksByTicker(@PathVariable String ticker) {
+        try {
+            return ResponseEntity.ok(stocksService.getIndicatorsFromStocksByTicker(ticker));
+        } catch (BadRequestNotFoundException exception) {
+            int errorCode = 404;
+            String message = "Could not find stocks with ticker: " + ticker;
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ExceptionResponse(errorCode, message));
+        }
+    }
 }

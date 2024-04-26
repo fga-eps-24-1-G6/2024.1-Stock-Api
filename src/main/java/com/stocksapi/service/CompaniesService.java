@@ -39,8 +39,8 @@ public class CompaniesService {
             Optional<Stocks> optStocks = stockRepository.findByCompanyId(id);
             if (optStocks.isPresent()) {
                 Optional<Prices> optPrices = priceRepository.findLatestPriceByStockId(optStocks.get().getId());
-                Long numberOfPapers = optCompanies.get().getNumberOfPapers();
-                BigDecimal marketValue = optPrices.get().getValue().multiply(new BigDecimal(numberOfPapers));
+                BigDecimal numberOfPapers = optCompanies.get().getNumberOfPapers();
+                BigDecimal marketValue = optPrices.get().getValue().multiply(numberOfPapers);
                 BalanceSheet optBalanceSheet = balanceSheetsRepository.findLatestBalanceSheetByCompanyId(id);
                 CompaniesResponse companiesResponse = new CompaniesResponse(optCompanies.get(), marketValue, optBalanceSheet.getEquity());
                 return companiesResponse;

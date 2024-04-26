@@ -33,7 +33,7 @@ public class Companies {
     private BigDecimal firmValue;
 
     @Column(name = "number_of_papers")
-    private Long numberOfPapers;
+    private BigDecimal numberOfPapers;
 
     @Column(name = "market_segment")
     private String marketSegment;
@@ -44,7 +44,7 @@ public class Companies {
     public Companies() {
     }
 
-    public Companies(String cnpj, BigDecimal firmValue, Integer foundationYear, Integer id, Integer ipo, String marketSegment, String name, Long numberOfPapers, String sector, String segment) {
+    public Companies(String cnpj, BigDecimal firmValue, Integer foundationYear, Integer id, Integer ipo, String marketSegment, String name, BigDecimal numberOfPapers, String sector, String segment) {
         this.cnpj = cnpj;
         this.firmValue = firmValue;
         this.foundationYear = foundationYear;
@@ -85,7 +85,7 @@ public class Companies {
         return name;
     }
 
-    public Long getNumberOfPapers() {
+    public BigDecimal getNumberOfPapers() {
         return numberOfPapers;
     }
 
