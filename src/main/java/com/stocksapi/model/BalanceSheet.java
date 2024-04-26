@@ -62,6 +62,7 @@ public class BalanceSheet {
     @Column(name = "liabilities")
     private BigDecimal liabilities;
 
+
     public BalanceSheet() {
     }
 
@@ -81,6 +82,7 @@ public class BalanceSheet {
         this.netProfit = netProfit;
         this.netRevenue = netRevenue;
         this.taxes = taxes;
+
     }
 
     public BigDecimal getAssets() {
@@ -142,4 +144,6 @@ public class BalanceSheet {
     public BigDecimal getTaxes() {
         return taxes;
     }
+
+
 }

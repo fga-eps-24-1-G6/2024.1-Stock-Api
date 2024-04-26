@@ -11,7 +11,7 @@ import java.util.Optional;
 
 public interface BalanceSheetsRepository extends JpaRepository<BalanceSheet, BalanceSheetId> {
 
-    @Query("SELECT bs FROM BalanceSheet bs WHERE bs.companies.id = :companyId")
+    @Query("SELECT bs FROM BalanceSheet bs WHERE bs.companies.id = :companyId ORDER BY bs.assets FETCH FIRST 1 ROW ONLY ")
     Optional<BalanceSheet> findLatestByCompanyId(@Param("companyId") Integer companyId);
 
     default BalanceSheet findLatestBalanceSheetByCompanyId(Integer companyId) {
@@ -20,4 +20,5 @@ public interface BalanceSheetsRepository extends JpaRepository<BalanceSheet, Bal
     }
 
     List<BalanceSheet> findAllByCompaniesId(Integer companyId);
+
 }

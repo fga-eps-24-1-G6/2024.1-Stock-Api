@@ -3,6 +3,7 @@ package com.stocksapi.service;
 import com.stocksapi.dto.IndicatorValueResponse;
 import com.stocksapi.dto.IndicatorsResponse;
 import com.stocksapi.dto.StocksResponse;
+import com.stocksapi.dto.ValuationResponse;
 import com.stocksapi.exception.BadRequestNotFoundException;
 import com.stocksapi.model.BalanceSheet;
 import com.stocksapi.model.Dividends;
@@ -36,7 +37,23 @@ public class StocksService {
         this.dividendsRepository = dividendsRepository;
     }
 
-    public StocksResponse getStocksByTicker (String ticker) {
+    public BigDecimal getValuationByTicker(String ticker) {
+        Optional<Stocks> optStocks = stockRepository.findByTicker(ticker);
+        if (optStocks.isPresent()) {
+            return getLPA(optStocks.get().getCompanies().getId());
+        }
+        throw new BadRequestNotFoundException(404, "Could not find stocks with ticker " + ticker);
+
+    }
+
+    private BigDecimal getLPA(int companyId) { //metodo auxiliar
+        BigDecimal netRevenue;
+        netRevenue = balanceSheetsRepository.findLatestBalanceSheetByCompanyId(companyId).getNetRevenue();
+        return netRevenue;
+
+    }
+
+    public StocksResponse getStocksByTicker(String ticker) {
         Optional<Stocks> optStocks = stockRepository.findByTicker(ticker);
         if (optStocks.isPresent()) {
             Optional<Prices> optPrices = priceRepository.findLatestPriceByStockId(optStocks.get().getId());
