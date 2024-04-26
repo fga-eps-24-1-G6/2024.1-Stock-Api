@@ -1,2 +1,5 @@
 ### Stocks - Get by ticker
 GET {{server}}/api/stocks/stock-summary/petr4
+
+### Stocks - Get Indicators by ticker
+GET {{server}}/api/stocks/indicators/petr4

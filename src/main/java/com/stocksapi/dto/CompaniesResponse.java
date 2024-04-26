@@ -11,7 +11,7 @@ public class CompaniesResponse {
     private String segment;
     private BigDecimal marketValue;
     private BigDecimal equity;
-    private Long numberOfPapers;
+    private BigDecimal numberOfPapers;
 
 
     public CompaniesResponse(Companies companies, BigDecimal marketValue, BigDecimal equity) {
@@ -35,7 +35,7 @@ public class CompaniesResponse {
         return marketValue;
     }
 
-    public Long getNumberOfPapers() {
+    public BigDecimal getNumberOfPapers() {
         return numberOfPapers;
     }
 

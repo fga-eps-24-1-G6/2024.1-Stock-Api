@@ -89,13 +89,13 @@ public class BalanceSheetsService {
 
                 int scale = 10;
                 RoundingMode roundingMode = RoundingMode.HALF_UP;
-                BigDecimal grossMargin = new BigDecimal(String.valueOf(balanceSheet.getGrossProfit())).divide(new BigDecimal(String.valueOf(balanceSheet.getNetRevenue())), scale, roundingMode);
+                BigDecimal grossMargin = balanceSheet.getGrossProfit().divide(balanceSheet.getNetRevenue(), scale, roundingMode);
                 YearlyValuesResponse grossMarginResponse = new YearlyValuesResponse(grossMargin, balanceSheet.getId().getYear());
                 grossMarginList.add(grossMarginResponse);
                 BalanceSheetsResponse balanceSheetsGrossMarginResponse = new BalanceSheetsResponse("Margem Bruta", grossMarginList);
                 balanceSheetsResponseList.add(balanceSheetsGrossMarginResponse);
 
-                BigDecimal netMargin = new BigDecimal(String.valueOf(balanceSheet.getNetProfit())).divide(new BigDecimal(String.valueOf(balanceSheet.getNetRevenue())), scale, roundingMode);
+                BigDecimal netMargin = balanceSheet.getNetProfit().divide(balanceSheet.getNetRevenue(), scale, roundingMode);
                 YearlyValuesResponse netMarginResponse = new YearlyValuesResponse(netMargin, balanceSheet.getId().getYear());
                 netMarginList.add(netMarginResponse);
                 BalanceSheetsResponse balanceSheetsNetMarginResponse = new BalanceSheetsResponse("Margem Líquida", netMarginList);
