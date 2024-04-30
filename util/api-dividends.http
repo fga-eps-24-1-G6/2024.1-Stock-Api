@@ -1,0 +1,2 @@
+### Dividends - Get by Ticker
+GET {{server}}/api/dividends/petr4
