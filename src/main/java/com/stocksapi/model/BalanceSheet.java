@@ -16,8 +16,10 @@ import java.math.BigDecimal;
 @Entity
 @Table(name = "balance_sheets", schema = "public")
 public class BalanceSheet {
-    @EmbeddedId
-    private BalanceSheetId id;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
 
     @ManyToOne
     @JoinColumn(name = "company_id", insertable = false, updatable = false)
@@ -62,11 +64,17 @@ public class BalanceSheet {
     @Column(name = "liabilities")
     private BigDecimal liabilities;
 
+    @Column(name = "year")
+    private Integer year;
+
+    @Column(name = "quarter")
+    private Integer quarter;
+
 
     public BalanceSheet() {
     }
 
-    public BalanceSheet(BigDecimal assets, BigDecimal cash, Companies companies, BigDecimal costs, BigDecimal ebit, BigDecimal ebitda, BigDecimal equity, BigDecimal grossDebt, BigDecimal grossProfit, BalanceSheetId id, BigDecimal liabilities, BigDecimal netDebt, BigDecimal netProfit, BigDecimal netRevenue, BigDecimal taxes) {
+    public BalanceSheet(BigDecimal assets, BigDecimal cash, Companies companies, BigDecimal costs, BigDecimal ebit, BigDecimal ebitda, BigDecimal equity, BigDecimal grossDebt, BigDecimal grossProfit, Integer id, BigDecimal liabilities, BigDecimal netDebt, BigDecimal netProfit, BigDecimal netRevenue, BigDecimal taxes, Integer year, Integer quarter ) {
         this.assets = assets;
         this.cash = cash;
         this.companies = companies;
@@ -82,6 +90,8 @@ public class BalanceSheet {
         this.netProfit = netProfit;
         this.netRevenue = netRevenue;
         this.taxes = taxes;
+        this.year = year;
+        this.quarter = quarter;
 
     }
 
@@ -121,7 +131,7 @@ public class BalanceSheet {
         return grossProfit;
     }
 
-    public BalanceSheetId getId() {
+    public Integer getId() {
         return id;
     }
 
@@ -144,6 +154,10 @@ public class BalanceSheet {
     public BigDecimal getTaxes() {
         return taxes;
     }
+
+    public Integer getYear(){return year;}
+
+    public Integer getQuarter(){return quarter;}
 
 
 }
