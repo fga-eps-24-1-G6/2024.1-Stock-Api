@@ -19,9 +19,6 @@ public class StockControllerTest extends BaseControllerTest {
     @Test
     void shouldGetStocksByTicker() throws Exception {
 
-
-
-        ;
         mockMvcService.get("/api/stocks/stock-summary/%s".replace("%s", TICKER))
                 .andExpect(status().is2xxSuccessful())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))

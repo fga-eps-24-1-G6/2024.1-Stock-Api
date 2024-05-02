@@ -4,10 +4,16 @@ import com.stocksapi.BaseTest;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.jdbc.datasource.init.ScriptUtils;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.testcontainers.containers.PostgreSQLContainer;
+
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.SQLException;
 
 public class BaseControllerTest extends BaseTest {
     @Autowired
@@ -16,7 +22,7 @@ public class BaseControllerTest extends BaseTest {
     private static final String TEST_DATABASE_IMAGE = "postgres:15-alpine";
     private static final String TEST_DATABASE_NAME = "stock-compass-db";
     private static final String TEST_DATABASE_USER = "db_consumer";
-    private static final String TEST_DATABASE_PWD = "cbtXKl7q9rzO";
+    private static final String TEST_DATABASE_PWD = "db_consumer_password";
 
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>(TEST_DATABASE_IMAGE)
             .withDatabaseName(TEST_DATABASE_NAME)
@@ -31,7 +37,7 @@ public class BaseControllerTest extends BaseTest {
 
     @DynamicPropertySource
     static void registerPgProperties(DynamicPropertyRegistry registry) {
-        String jdbcUrl = String.format("jdbc:postgresql://ep-tight-math-a5csxlts.us-east-2.aws.neon.tech:5432/stock-compass-db");
+        String jdbcUrl = String.format("jdbc:postgresql://localhost:%d/%s", 5432, TEST_DATABASE_NAME);
         registry.add("spring.datasource.url", () -> jdbcUrl);
         registry.add("spring.datasource.username", () -> TEST_DATABASE_USER);
         registry.add("spring.datasource.password", () -> TEST_DATABASE_PWD);
