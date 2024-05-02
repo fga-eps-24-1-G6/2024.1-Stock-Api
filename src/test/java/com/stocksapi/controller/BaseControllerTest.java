@@ -31,8 +31,10 @@ public class BaseControllerTest extends BaseTest {
             .withExposedPorts(5432);
 
     @BeforeAll
-    static void setup() {
-        postgres.start();
+    static void setup(@Autowired DataSource dataSource) throws SQLException {
+        try (Connection conn = dataSource.getConnection()) {
+            ScriptUtils.executeSqlScript(conn, new ClassPathResource("/sql/init.sql"));
+        }
     }
 
     @DynamicPropertySource

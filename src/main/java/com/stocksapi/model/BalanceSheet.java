@@ -16,8 +16,19 @@ import java.math.BigDecimal;
 @Entity
 @Table(name = "balance_sheets", schema = "public")
 public class BalanceSheet {
-    @EmbeddedId
-    private BalanceSheetId id;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
+
+    @Column(name = "company_id")
+    private Long companyId;
+
+    @Column(name = "year")
+    private Integer year;
+
+    @Column(name = "quarter")
+    private Integer quarter;
 
     @ManyToOne
     @JoinColumn(name = "company_id", insertable = false, updatable = false)
@@ -65,10 +76,11 @@ public class BalanceSheet {
     public BalanceSheet() {
     }
 
-    public BalanceSheet(BigDecimal assets, BigDecimal cash, Companies companies, BigDecimal costs, BigDecimal ebit, BigDecimal ebitda, BigDecimal equity, BigDecimal grossDebt, BigDecimal grossProfit, BalanceSheetId id, BigDecimal liabilities, BigDecimal netDebt, BigDecimal netProfit, BigDecimal netRevenue, BigDecimal taxes) {
+    public BalanceSheet(BigDecimal assets, BigDecimal cash, Companies companies, Long companyId, BigDecimal costs, BigDecimal ebit, BigDecimal ebitda, BigDecimal equity, BigDecimal grossDebt, BigDecimal grossProfit, Integer id, BigDecimal liabilities, BigDecimal netDebt, BigDecimal netProfit, BigDecimal netRevenue, Integer quarter, BigDecimal taxes, Integer year) {
         this.assets = assets;
         this.cash = cash;
         this.companies = companies;
+        this.companyId = companyId;
         this.costs = costs;
         this.ebit = ebit;
         this.ebitda = ebitda;
@@ -80,7 +92,9 @@ public class BalanceSheet {
         this.netDebt = netDebt;
         this.netProfit = netProfit;
         this.netRevenue = netRevenue;
+        this.quarter = quarter;
         this.taxes = taxes;
+        this.year = year;
     }
 
     public BigDecimal getAssets() {
@@ -93,6 +107,10 @@ public class BalanceSheet {
 
     public Companies getCompanies() {
         return companies;
+    }
+
+    public Long getCompanyId() {
+        return companyId;
     }
 
     public BigDecimal getCosts() {
@@ -119,7 +137,7 @@ public class BalanceSheet {
         return grossProfit;
     }
 
-    public BalanceSheetId getId() {
+    public Integer getId() {
         return id;
     }
 
@@ -139,7 +157,15 @@ public class BalanceSheet {
         return netRevenue;
     }
 
+    public Integer getQuarter() {
+        return quarter;
+    }
+
     public BigDecimal getTaxes() {
         return taxes;
+    }
+
+    public Integer getYear() {
+        return year;
     }
 }
