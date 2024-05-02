@@ -1,0 +1,5 @@
+DROP TABLE IF EXISTS prices;
+DROP TABLE IF EXISTS dividends;
+DROP TABLE IF EXISTS stocks;
+DROP TABLE IF EXISTS balance_sheets;
+DROP TABLE IF EXISTS companies;

@@ -33,6 +33,7 @@ public class BaseControllerTest extends BaseTest {
     @BeforeAll
     static void setup(@Autowired DataSource dataSource) throws SQLException {
         try (Connection conn = dataSource.getConnection()) {
+            ScriptUtils.executeSqlScript(conn, new ClassPathResource("/sql/drop_tables.sql"));
             ScriptUtils.executeSqlScript(conn, new ClassPathResource("/sql/init.sql"));
         }
     }
