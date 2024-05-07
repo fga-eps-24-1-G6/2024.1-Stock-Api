@@ -1,16 +1,18 @@
 package com.stocksapi.dto;
 
-
 import java.math.BigDecimal;
 
-public class ValuationValueResponse {
+public class CeilingPriceResponse {
+
     private String method;
     private BigDecimal value;
 
+    public CeilingPriceResponse() {
+    }
 
-    public ValuationValueResponse(String method, BigDecimal value) {
-        this.method = method;
+    public CeilingPriceResponse(BigDecimal value, String method) {
         this.value = value;
+        this.method = method;
     }
 
     public String getMethod() {
@@ -20,7 +22,5 @@ public class ValuationValueResponse {
     public BigDecimal getValue() {
         return value;
     }
+
 }
-
-
-

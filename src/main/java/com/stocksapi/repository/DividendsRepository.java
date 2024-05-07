@@ -2,11 +2,16 @@ package com.stocksapi.repository;
 
 import com.stocksapi.model.Dividends;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
+import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 public interface DividendsRepository extends JpaRepository<Dividends, Integer> {
     Optional<Dividends> findByStocksId(Integer id);
+    @Query("SELECT d FROM Dividends d WHERE d.stocks.id = :stockId AND d.paymentDate BETWEEN :endDate AND :startDate")
+    List<Dividends> findLastTwelveMonthsDividendsByStockId(Integer stockId, LocalDate startDate, LocalDate endDate);
 }
 
 

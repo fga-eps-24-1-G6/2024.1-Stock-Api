@@ -1,9 +1,6 @@
 package com.stocksapi.service;
 
-import com.stocksapi.dto.IndicatorValueResponse;
-import com.stocksapi.dto.IndicatorsResponse;
-import com.stocksapi.dto.StocksResponse;
-import com.stocksapi.dto.ValuationResponse;
+import com.stocksapi.dto.*;
 import com.stocksapi.exception.BadRequestNotFoundException;
 import com.stocksapi.model.BalanceSheet;
 import com.stocksapi.model.Dividends;
@@ -37,13 +34,17 @@ public class StocksService {
         this.companiesRepository = companiesRepository;
     }
 
-    public Double getValuationByTicker(String ticker) {
+    public ValuationResponse getValuationByTicker(String ticker) {
         Optional<Stocks> optStocks = stockRepository.findByTicker(ticker);
         if (optStocks.isPresent()) {
 
             Integer companyId = optStocks.get().getCompanies().getId();
             BigDecimal result = getLPA(companyId).multiply(getVPA(companyId)).multiply(BigDecimal.valueOf(22.5));
-            return Math.sqrt(result.doubleValue());
+            BigDecimal ceilingPrice = getCeilingPrice(optStocks.get().getId());
+            TargetPriceResponse targetPriceResponse = new TargetPriceResponse(Math.sqrt(result.doubleValue()), "PREÇO ALVO" );
+            CeilingPriceResponse ceilingPriceResponse = new CeilingPriceResponse(ceilingPrice, "PREÇO TETO");
+            ValuationResponse valuationResponse = new ValuationResponse(targetPriceResponse, ceilingPriceResponse);
+            return valuationResponse;
         }
         throw new BadRequestNotFoundException(404, "Could not find stocks with ticker " + ticker);
 
@@ -107,6 +108,27 @@ public class StocksService {
     }
 
     //criar getCeilingPrice(chamar o repositorio de dividendo e dividir o valor por 0.06) o resultado disso é o preço teto
+    public BigDecimal getCeilingPrice(Integer stockId){
+        LocalDate startDate = LocalDate.now();
+        LocalDate endDate = startDate.minusMonths(12);
+        List<Dividends> dividendsList = dividendsRepository.findLastTwelveMonthsDividendsByStockId(stockId, startDate, endDate);
+
+        if (!dividendsList.isEmpty()){
+
+            BigDecimal total = dividendsList.stream()
+                    .map(dividends -> dividends.getValue())
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            BigDecimal ceilingPrice = total.divide(BigDecimal.valueOf(0.06), 2, BigDecimal.ROUND_HALF_UP);
+
+            return ceilingPrice;
+
+        } else{
+            throw new BadRequestNotFoundException(404, "Could not find dividends with stockId: " + stockId);
+
+        }
+
+    }
 
     public IndicatorsResponse getIndicatorsFromStocksByTicker(String ticker) {
         Optional<Stocks> optStocks = stockRepository.findByTicker(ticker);
