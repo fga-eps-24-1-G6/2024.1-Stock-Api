@@ -1,10 +1,12 @@
 package com.stocksapi.dto;
 
 import com.stocksapi.model.Companies;
+import lombok.Getter;
+import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.math.BigInteger;
 
+@Getter
 public class CompaniesResponse {
     private Integer ipo;
     private String sector;
@@ -13,7 +15,6 @@ public class CompaniesResponse {
     private BigDecimal equity;
     private BigDecimal numberOfPapers;
 
-
     public CompaniesResponse(Companies companies, BigDecimal marketValue, BigDecimal equity) {
         this.ipo = companies.getIpo();
         this.sector = companies.getSector();
@@ -21,29 +22,5 @@ public class CompaniesResponse {
         this.marketValue = marketValue;
         this.equity = equity;
         this.numberOfPapers = companies.getNumberOfPapers();
-    }
-
-    public BigDecimal getEquity() {
-        return equity;
-    }
-
-    public Integer getIpo() {
-        return ipo;
-    }
-
-    public BigDecimal getMarketValue() {
-        return marketValue;
-    }
-
-    public BigDecimal getNumberOfPapers() {
-        return numberOfPapers;
-    }
-
-    public String getSector() {
-        return sector;
-    }
-
-    public String getSegment() {
-        return segment;
     }
 }
