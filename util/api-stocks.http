@@ -3,3 +3,6 @@ GET {{server}}/api/stocks/stock-summary/ABCB4
 
 ### Stocks - Get Indicators by ticker
 GET {{server}}/api/stocks/indicators/ABCB4
+
+### Stocks - Get Valuation by ticker
+GET {{server}}/api/stocks/valuation/ABCB4
