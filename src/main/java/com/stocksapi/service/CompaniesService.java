@@ -41,8 +41,13 @@ public class CompaniesService {
                 Optional<Prices> optPrices = priceRepository.findLatestPriceByStockId(optStocks.get().getId());
                 BigDecimal numberOfPapers = optCompanies.get().getNumberOfPapers();
                 BigDecimal marketValue = optPrices.get().getValue().multiply(numberOfPapers);
+<<<<<<< HEAD
                 BalanceSheet optBalanceSheet = balanceSheetsRepository.findLatestBalanceSheetByCompanyId(id)[0];
                 CompaniesResponse companiesResponse = new CompaniesResponse(optCompanies.get(), marketValue, optBalanceSheet.getEquity());
+=======
+                Optional<BalanceSheet> optBalanceSheet = balanceSheetsRepository.findLatestByCompanyId(id);
+                CompaniesResponse companiesResponse = new CompaniesResponse(optCompanies.get(), marketValue, optBalanceSheet.get().getEquity());
+>>>>>>> fbee057c304a24d5a84bb76f8a045c94d56de64c
                 return companiesResponse;
             } else {
                 throw new BadRequestNotFoundException(404, "Could not find stocks from Company with id: " + id);

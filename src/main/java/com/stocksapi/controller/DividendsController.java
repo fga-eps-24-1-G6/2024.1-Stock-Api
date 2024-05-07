@@ -12,11 +12,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/dividends")
-public class DivdendsController {
+public class DividendsController {
 
     private final DividendsService dividendsService;
 
-    public DivdendsController(DividendsService dividendsService) {
+    public DividendsController(DividendsService dividendsService) {
         this.dividendsService = dividendsService;
     }
 
