@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -46,6 +47,20 @@ public class StockController {
     public ResponseEntity<?> getIndicatorsFromStocksByTicker(@PathVariable String ticker) {
         try {
             return ResponseEntity.ok(stocksService.getIndicatorsFromStocksByTicker(ticker));
+        } catch (BadRequestNotFoundException exception) {
+            int errorCode = 404;
+            String message = "Could not find stocks with ticker: " + ticker;
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ExceptionResponse(errorCode, message));
+        }
+    }
+
+    @GetMapping(value = "/search")
+    public ResponseEntity<?> getSearchStocks(@RequestParam(name = "ticker", required = false) String ticker,
+                                             @RequestParam(name = "companyName", required = false) String companyName,
+                                             @RequestParam(name = "categorie", required = false) String categorie,
+                                             @RequestParam(name = "sector", required = false) String sector) {
+        try {
+            return ResponseEntity.ok(stocksService.searchStocks(ticker, companyName, categorie, sector));
         } catch (BadRequestNotFoundException exception) {
             int errorCode = 404;
             String message = "Could not find stocks with ticker: " + ticker;

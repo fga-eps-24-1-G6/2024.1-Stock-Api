@@ -11,5 +11,5 @@ public interface PriceRepository extends JpaRepository<Prices, Integer> {
     @Query("SELECT p FROM Prices p WHERE p.stockId.id = :id AND p.id = (SELECT MAX(p2.id) FROM Prices p2 WHERE p2.stockId.id = :id)")
     Optional<Prices> findLatestPriceByStockId(Integer id);
 
-    List<Prices> findAllByStockIdIdOrderByPriceDate(Integer id);
+    List<Prices> findAllByStockIdIdOrderByPriceDateDesc(Integer id);
 }

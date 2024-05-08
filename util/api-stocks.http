@@ -6,3 +6,6 @@ GET {{server}}/api/stocks/indicators/ABCB4
 
 ### Stocks - Get Valuation by ticker
 GET {{server}}/api/stocks/valuation/ABEV3
+
+### Stocks - Search
+GET {{server}}/api/stocks/search?categorie=small&ticker=ABCB4&companyName=BANCO%20ABC%20BRASIL
