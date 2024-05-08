@@ -6,6 +6,7 @@ import com.stocksapi.model.BalanceSheet;
 import com.stocksapi.model.Dividends;
 import com.stocksapi.model.Prices;
 import com.stocksapi.model.Stocks;
+import com.stocksapi.dto.SearchedStocksResponse;
 import com.stocksapi.repository.*;
 import org.springframework.stereotype.Service;
 
@@ -263,14 +264,19 @@ public class StocksService {
     public List<SearchedStocksResponse> searchStocks(String ticker, String companyName, String category, String sector) {
         List<SearchedStocksResponse> responseList = new ArrayList<SearchedStocksResponse>();
         if ("small".equalsIgnoreCase(category)) {
-            List<Stocks> stocksList = stockRepository.searchSmall(companyName, sector, ticker);
-            List<Prices> pricesList = priceRepository.findAllByStockIdIdOrderByPriceDateDesc(stocksList.get(0).getId());
+            List<SearchedStocksResponse> stocksList = stockRepository.searchSmall(companyName, sector, ticker);
+            List<Prices> pricesList;
+            if (!stocksList.isEmpty()) {
+                pricesList = priceRepository.findAllByStockIdIdOrderByPriceDateDesc(stocksList.get(0).getId());
+            } else {
+                throw new BadRequestNotFoundException(404, "Could not find stocks with ticker " + ticker + " or " + sector +  " or " + companyName + " or " + category);
+            }
             if (!pricesList.isEmpty()){
                 if (!stocksList.isEmpty()){
-                    for (Stocks stock : stocksList){
+                    for (SearchedStocksResponse stock : stocksList){
                         BigDecimal variationOneDay = pricesList.get(0).getValue().subtract(pricesList.get(1).getValue()).abs();
-                        SearchedStocksResponse searchedStocksResponse = new SearchedStocksResponse(stock.getCompanies().getId(), stock.getCompanies().getName(), stock.getId(), pricesList.get(0).getValue(), stock.getTicker(), variationOneDay);
-                        responseList.add(searchedStocksResponse);
+                        SearchedStocksResponse StocksCompanies = new SearchedStocksResponse(stock.getCompanyId(), stock.getCompanyName(), stock.getId(), pricesList.get(0).getValue(), stock.getSector(), stock.getTicker(), variationOneDay);
+                        responseList.add(StocksCompanies);
                     }
                 } else {
                     throw new BadRequestNotFoundException(404, "Could not find stocks with ticker " + ticker + " or " + sector +  " or " + companyName + " or " + category);
@@ -280,14 +286,19 @@ public class StocksService {
             }
             return responseList;
         } else {
-            List<Stocks> stocksList = stockRepository.searchLarge(companyName, sector, ticker);
-            List<Prices> pricesList = priceRepository.findAllByStockIdIdOrderByPriceDateDesc(stocksList.get(0).getId());
+            List<SearchedStocksResponse> stocksList = stockRepository.searchLarge(companyName, sector, ticker);
+            List<Prices> pricesList;
+            if (!stocksList.isEmpty()) {
+               pricesList = priceRepository.findAllByStockIdIdOrderByPriceDateDesc(stocksList.get(0).getId());
+            } else {
+                throw new BadRequestNotFoundException(404, "Could not find stocks with ticker " + ticker + " or " + sector +  " or " + companyName + " or " + category);
+            }
             if (!pricesList.isEmpty()){
                 if (!stocksList.isEmpty()){
-                    for (Stocks stock : stocksList){
+                    for (SearchedStocksResponse stock : stocksList){
                         BigDecimal variationOneDay = pricesList.get(0).getValue().subtract(pricesList.get(1).getValue()).abs();
-                        SearchedStocksResponse searchedStocksResponse = new SearchedStocksResponse(stock.getCompanies().getId(), stock.getCompanies().getName(), stock.getId(), pricesList.get(0).getValue(), stock.getTicker(), variationOneDay);
-                        responseList.add(searchedStocksResponse);
+                        SearchedStocksResponse StocksCompanies = new SearchedStocksResponse(stock.getCompanyId(), stock.getCompanyName(), stock.getId(), pricesList.get(0).getValue(), stock.getSector(), stock.getTicker(), variationOneDay);
+                        responseList.add(StocksCompanies);
                     }
                 } else {
                     throw new BadRequestNotFoundException(404, "Could not find stocks with ticker " + ticker + " or " + sector +  " or " + companyName + " or " + category);

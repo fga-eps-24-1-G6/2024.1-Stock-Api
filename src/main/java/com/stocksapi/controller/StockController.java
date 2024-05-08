@@ -55,10 +55,10 @@ public class StockController {
     }
 
     @GetMapping(value = "/search")
-    public ResponseEntity<?> getSearchStocks(@RequestParam(name = "ticker", required = false) String ticker,
-                                             @RequestParam(name = "companyName", required = false) String companyName,
-                                             @RequestParam(name = "category", required = false) String category,
-                                             @RequestParam(name = "sector", required = false) String sector) {
+    public ResponseEntity<?> getSearchStocks(@RequestParam(name = "ticker", required = true) String ticker,
+                                             @RequestParam(name = "companyName", required = true) String companyName,
+                                             @RequestParam(name = "category", required = true) String category,
+                                             @RequestParam(name = "sector", required = true) String sector) {
         try {
             return ResponseEntity.ok(stocksService.searchStocks(ticker, companyName, category, sector));
         } catch (BadRequestNotFoundException exception) {
