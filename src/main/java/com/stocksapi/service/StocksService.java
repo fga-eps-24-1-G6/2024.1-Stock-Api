@@ -260,9 +260,9 @@ public class StocksService {
         return null;
     }
 
-    public List<SearchedStocksResponse> searchStocks(String ticker, String companyName, String categorie, String sector) {
+    public List<SearchedStocksResponse> searchStocks(String ticker, String companyName, String category, String sector) {
         List<SearchedStocksResponse> responseList = new ArrayList<SearchedStocksResponse>();
-        if ("small".equalsIgnoreCase(categorie)) {
+        if ("small".equalsIgnoreCase(category)) {
             List<Stocks> stocksList = stockRepository.searchSmall(companyName, sector, ticker);
             List<Prices> pricesList = priceRepository.findAllByStockIdIdOrderByPriceDateDesc(stocksList.get(0).getId());
             if (!pricesList.isEmpty()){
@@ -273,7 +273,7 @@ public class StocksService {
                         responseList.add(searchedStocksResponse);
                     }
                 } else {
-                    throw new BadRequestNotFoundException(404, "Could not find stocks with ticker " + ticker + " or " + sector +  " or " + companyName + " or " + categorie);
+                    throw new BadRequestNotFoundException(404, "Could not find stocks with ticker " + ticker + " or " + sector +  " or " + companyName + " or " + category);
                 }
             } else {
                 throw new BadRequestNotFoundException(404, "Could not find prices with stockId " + stocksList.get(0).getId());
@@ -290,7 +290,7 @@ public class StocksService {
                         responseList.add(searchedStocksResponse);
                     }
                 } else {
-                    throw new BadRequestNotFoundException(404, "Could not find stocks with ticker " + ticker + " or " + sector +  " or " + companyName + " or " + categorie);
+                    throw new BadRequestNotFoundException(404, "Could not find stocks with ticker " + ticker + " or " + sector +  " or " + companyName + " or " + category);
                 }
             } else {
                 throw new BadRequestNotFoundException(404, "Could not find prices with stockId " + stocksList.get(0).getId());

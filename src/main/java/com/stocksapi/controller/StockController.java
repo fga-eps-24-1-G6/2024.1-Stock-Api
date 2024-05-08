@@ -57,10 +57,10 @@ public class StockController {
     @GetMapping(value = "/search")
     public ResponseEntity<?> getSearchStocks(@RequestParam(name = "ticker", required = false) String ticker,
                                              @RequestParam(name = "companyName", required = false) String companyName,
-                                             @RequestParam(name = "categorie", required = false) String categorie,
+                                             @RequestParam(name = "category", required = false) String category,
                                              @RequestParam(name = "sector", required = false) String sector) {
         try {
-            return ResponseEntity.ok(stocksService.searchStocks(ticker, companyName, categorie, sector));
+            return ResponseEntity.ok(stocksService.searchStocks(ticker, companyName, category, sector));
         } catch (BadRequestNotFoundException exception) {
             int errorCode = 404;
             String message = "Could not find stocks with ticker: " + ticker;
