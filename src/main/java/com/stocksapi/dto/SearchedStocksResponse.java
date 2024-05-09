@@ -24,7 +24,7 @@ public class SearchedStocksResponse {
         this.variationOneDay = variationOneDay;
     }
 
-    public SearchedStocksResponse(Integer companyId, String companyName, String ticker, String sector, Integer id) {
+    public SearchedStocksResponse(Integer id, String ticker, String companyName, String sector, Integer companyId) {
         this.companyId = companyId;
         this.companyName = companyName;
         this.id = id;

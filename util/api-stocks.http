@@ -8,4 +8,4 @@ GET {{server}}/api/stocks/indicators/ABCB4
 GET {{server}}/api/stocks/valuation/ABEV3
 
 ### Stocks - Search
-GET {{server}}/api/stocks/search?category=large&ticker=ABCB4&sector=Financeiro
+GET {{server}}/api/stocks/search?category=small&sector=Financeiro
