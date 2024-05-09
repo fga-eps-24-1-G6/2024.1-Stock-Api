@@ -2,7 +2,6 @@ package com.stocksapi.dto;
 
 import com.stocksapi.model.Companies;
 import lombok.Getter;
-import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 

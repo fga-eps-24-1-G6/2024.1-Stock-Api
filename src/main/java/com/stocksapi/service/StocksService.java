@@ -91,71 +91,71 @@ public class StocksService {
                 indicators.add(pvpResponse);
 
                 // Rever questao de calculo de valores de proventos, Batista explicou certinho
-                Optional<Dividends> optDividends = dividendsRepository.findByStocksId(optStocks.get().getId());
-                BigDecimal divYieldValue = optDividends.get().getValue().divide(value, scale, roundingMode);
-                IndicatorValueResponse divYieldResponse = new IndicatorValueResponse("DIV YIELD", divYieldValue);
-                indicators.add(divYieldResponse);
-
-                BigDecimal payoutValue = optDividends.get().getValue().divide(netProfit, scale, roundingMode);
-                IndicatorValueResponse payoutResponse = new IndicatorValueResponse("PAYOUT", payoutValue);
-                indicators.add(payoutResponse);
-
-                BigDecimal netMarginValue = optBalanceSheets.get().getNetProfit().divide(optBalanceSheets.get().getNetRevenue(), scale, roundingMode);
-                IndicatorValueResponse netMarginResponse = new IndicatorValueResponse("MARGEM LÍQ", netMarginValue);
-                indicators.add(netMarginResponse);
-
-                BigDecimal grossMarginValue = optBalanceSheets.get().getGrossProfit().divide(optBalanceSheets.get().getNetRevenue(), scale, roundingMode);
-                IndicatorValueResponse grossMarginResponse = new IndicatorValueResponse("MARGEM BRUTA", grossMarginValue);
-                indicators.add(grossMarginResponse);
-
-                BigDecimal ebitMarginValue = optBalanceSheets.get().getEbit().divide(optBalanceSheets.get().getNetRevenue(), scale, roundingMode);
-                IndicatorValueResponse ebitMarginResponse = new IndicatorValueResponse("MARGEM EBIT", ebitMarginValue);
-                indicators.add(ebitMarginResponse);
-
-                BigDecimal marketValue = optPrices.get().getValue().multiply(optStocks.get().getCompanies().getNumberOfPapers());
-
-                BigDecimal evEbitValue = marketValue.divide(optBalanceSheets.get().getEbit(), scale, roundingMode);
-                IndicatorValueResponse evEbitResponse = new IndicatorValueResponse("EV/EBIT", evEbitValue);
-                indicators.add(evEbitResponse);
-
-                BigDecimal evEbitdaValue = marketValue.divide(optBalanceSheets.get().getEbitda(), scale, roundingMode);
-                IndicatorValueResponse evEbitdaResponse = new IndicatorValueResponse("EV/EBITDA", evEbitdaValue);
-                indicators.add(evEbitdaResponse);
-
-                IndicatorValueResponse vpaResponse = new IndicatorValueResponse("VPA", vpaValue);
-                indicators.add(vpaResponse);
-
-                IndicatorValueResponse lpaResponse = new IndicatorValueResponse("LPA", lpaValue);
-                indicators.add(lpaResponse);
-
-                BigDecimal roeValue = optBalanceSheets.get().getNetProfit().divide(optBalanceSheets.get().getEquity(), scale, roundingMode);
-                IndicatorValueResponse roeResponse = new IndicatorValueResponse("ROE", roeValue);
-                indicators.add(roeResponse);
-
-                BigDecimal roicValue = optBalanceSheets.get().getEbit().divide(optBalanceSheets.get().getLiabilities(), scale, roundingMode);
-                IndicatorValueResponse roicResponse = new IndicatorValueResponse("ROIC", roicValue);
-                indicators.add(roicResponse);
-
-                BigDecimal roaValue = optBalanceSheets.get().getNetProfit().divide(optBalanceSheets.get().getAssets(), scale, roundingMode);
-                IndicatorValueResponse roaResponse = new IndicatorValueResponse("ROA", roaValue);
-                indicators.add(roaResponse);
-
-                // Rever lógica de cálculo de CAGR LUCRO e CAGR REC
-                BigDecimal profitCagrValue = optBalanceSheets.get().getNetProfit().multiply(optBalanceSheets.get().getNetProfit());
-                IndicatorValueResponse profitCagrResponse = new IndicatorValueResponse("CAGR LUCRO", profitCagrValue);
-                indicators.add(profitCagrResponse);
-
-                BigDecimal cagrRecValue = optBalanceSheets.get().getNetRevenue().multiply(optBalanceSheets.get().getNetRevenue());
-                IndicatorValueResponse cagrRecResponse = new IndicatorValueResponse("CAGR REC", cagrRecValue);
-                indicators.add(cagrRecResponse);
-
-                BigDecimal divLiqPatLiqValue = optBalanceSheets.get().getNetDebt().divide(optBalanceSheets.get().getEquity(), scale, roundingMode);
-                IndicatorValueResponse divLiqPatLiqResponse = new IndicatorValueResponse("DÍV LÍQ/PAT LÍQ", divLiqPatLiqValue);
-                indicators.add(divLiqPatLiqResponse);
-
-                BigDecimal divLiqEbit = optBalanceSheets.get().getNetDebt().divide(optBalanceSheets.get().getEbit(), scale, roundingMode);
-                IndicatorValueResponse divLiqEbitResponse = new IndicatorValueResponse("DÍV LÍQ/EBIT", divLiqEbit);
-                indicators.add(divLiqEbitResponse);
+//                List<Dividends> optDividends = dividendsRepository.findByStocksId(optStocks.get().getId());
+//                BigDecimal divYieldValue = optDividends.get().getValue().divide(value, scale, roundingMode);
+//                IndicatorValueResponse divYieldResponse = new IndicatorValueResponse("DIV YIELD", divYieldValue);
+//                indicators.add(divYieldResponse);
+//
+//                BigDecimal payoutValue = optDividends.get().getValue().divide(netProfit, scale, roundingMode);
+//                IndicatorValueResponse payoutResponse = new IndicatorValueResponse("PAYOUT", payoutValue);
+//                indicators.add(payoutResponse);
+//
+//                BigDecimal netMarginValue = optBalanceSheets.get().getNetProfit().divide(optBalanceSheets.get().getNetRevenue(), scale, roundingMode);
+//                IndicatorValueResponse netMarginResponse = new IndicatorValueResponse("MARGEM LÍQ", netMarginValue);
+//                indicators.add(netMarginResponse);
+//
+//                BigDecimal grossMarginValue = optBalanceSheets.get().getGrossProfit().divide(optBalanceSheets.get().getNetRevenue(), scale, roundingMode);
+//                IndicatorValueResponse grossMarginResponse = new IndicatorValueResponse("MARGEM BRUTA", grossMarginValue);
+//                indicators.add(grossMarginResponse);
+//
+//                BigDecimal ebitMarginValue = optBalanceSheets.get().getEbit().divide(optBalanceSheets.get().getNetRevenue(), scale, roundingMode);
+//                IndicatorValueResponse ebitMarginResponse = new IndicatorValueResponse("MARGEM EBIT", ebitMarginValue);
+//                indicators.add(ebitMarginResponse);
+//
+//                BigDecimal marketValue = optPrices.get().getValue().multiply(optStocks.get().getCompanies().getNumberOfPapers());
+//
+//                BigDecimal evEbitValue = marketValue.divide(optBalanceSheets.get().getEbit(), scale, roundingMode);
+//                IndicatorValueResponse evEbitResponse = new IndicatorValueResponse("EV/EBIT", evEbitValue);
+//                indicators.add(evEbitResponse);
+//
+//                BigDecimal evEbitdaValue = marketValue.divide(optBalanceSheets.get().getEbitda(), scale, roundingMode);
+//                IndicatorValueResponse evEbitdaResponse = new IndicatorValueResponse("EV/EBITDA", evEbitdaValue);
+//                indicators.add(evEbitdaResponse);
+//
+//                IndicatorValueResponse vpaResponse = new IndicatorValueResponse("VPA", vpaValue);
+//                indicators.add(vpaResponse);
+//
+//                IndicatorValueResponse lpaResponse = new IndicatorValueResponse("LPA", lpaValue);
+//                indicators.add(lpaResponse);
+//
+//                BigDecimal roeValue = optBalanceSheets.get().getNetProfit().divide(optBalanceSheets.get().getEquity(), scale, roundingMode);
+//                IndicatorValueResponse roeResponse = new IndicatorValueResponse("ROE", roeValue);
+//                indicators.add(roeResponse);
+//
+//                BigDecimal roicValue = optBalanceSheets.get().getEbit().divide(optBalanceSheets.get().getLiabilities(), scale, roundingMode);
+//                IndicatorValueResponse roicResponse = new IndicatorValueResponse("ROIC", roicValue);
+//                indicators.add(roicResponse);
+//
+//                BigDecimal roaValue = optBalanceSheets.get().getNetProfit().divide(optBalanceSheets.get().getAssets(), scale, roundingMode);
+//                IndicatorValueResponse roaResponse = new IndicatorValueResponse("ROA", roaValue);
+//                indicators.add(roaResponse);
+//
+//                // Rever lógica de cálculo de CAGR LUCRO e CAGR REC
+//                BigDecimal profitCagrValue = optBalanceSheets.get().getNetProfit().multiply(optBalanceSheets.get().getNetProfit());
+//                IndicatorValueResponse profitCagrResponse = new IndicatorValueResponse("CAGR LUCRO", profitCagrValue);
+//                indicators.add(profitCagrResponse);
+//
+//                BigDecimal cagrRecValue = optBalanceSheets.get().getNetRevenue().multiply(optBalanceSheets.get().getNetRevenue());
+//                IndicatorValueResponse cagrRecResponse = new IndicatorValueResponse("CAGR REC", cagrRecValue);
+//                indicators.add(cagrRecResponse);
+//
+//                BigDecimal divLiqPatLiqValue = optBalanceSheets.get().getNetDebt().divide(optBalanceSheets.get().getEquity(), scale, roundingMode);
+//                IndicatorValueResponse divLiqPatLiqResponse = new IndicatorValueResponse("DÍV LÍQ/PAT LÍQ", divLiqPatLiqValue);
+//                indicators.add(divLiqPatLiqResponse);
+//
+//                BigDecimal divLiqEbit = optBalanceSheets.get().getNetDebt().divide(optBalanceSheets.get().getEbit(), scale, roundingMode);
+//                IndicatorValueResponse divLiqEbitResponse = new IndicatorValueResponse("DÍV LÍQ/EBIT", divLiqEbit);
+//                indicators.add(divLiqEbitResponse);
 
                 return new IndicatorsResponse(indicators);
 
