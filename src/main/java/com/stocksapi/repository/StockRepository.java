@@ -28,5 +28,8 @@ public interface StockRepository extends JpaRepository<Stocks, Integer> {
             "WHERE c.firmValue >= 10000000000 ")
     List<SearchedStocksResponse> searchAllLarge();
 
-
+    @Query("SELECT NEW com.stocksapi.dto.SearchedStocksResponse(s.id, s.ticker, c.name, c.sector, c.id) " +
+            "FROM Stocks s " +
+            "INNER JOIN s.companies c ")
+    List<SearchedStocksResponse> searchAll();
 }
