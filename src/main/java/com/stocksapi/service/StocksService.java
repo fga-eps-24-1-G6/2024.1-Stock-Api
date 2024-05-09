@@ -6,16 +6,17 @@ import com.stocksapi.model.BalanceSheet;
 import com.stocksapi.model.Dividends;
 import com.stocksapi.model.Prices;
 import com.stocksapi.model.Stocks;
+import com.stocksapi.dto.SearchedStocksResponse;
 import com.stocksapi.repository.*;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class StocksService {
@@ -61,7 +62,7 @@ public class StocksService {
     }
 
     private BigDecimal getPL(Integer stockId, Integer companyId) {
-            List<Prices> findAllPrices = priceRepository.findAllByStockIdIdOrderByPriceDate(stockId);
+            List<Prices> findAllPrices = priceRepository.findAllByStockIdIdOrderByPriceDateDesc(stockId);
             BigDecimal currentPrice = findAllPrices.get(findAllPrices.size() - 1).getValue();
             return currentPrice.divide(getLPA(companyId), 2,BigDecimal.ROUND_HALF_UP) ;
 
@@ -88,7 +89,7 @@ public class StocksService {
             if (comnpareTo < 0) {
                 categorie = "SMALL";
             }
-            List<Prices> findAllPrices = priceRepository.findAllByStockIdIdOrderByPriceDate(optStocks.get().getId());
+            List<Prices> findAllPrices = priceRepository.findAllByStockIdIdOrderByPriceDateDesc(optStocks.get().getId());
 
             BigDecimal currentPrice = findAllPrices.get(findAllPrices.size() - 1).getValue();
             BigDecimal priceOneDayAgo = getPriceXDaysAgo(findAllPrices, 1);
@@ -107,7 +108,6 @@ public class StocksService {
         throw new BadRequestNotFoundException(404, "Could not find stocks with ticker " + ticker);
     }
 
-    //criar getCeilingPrice(chamar o repositorio de dividendo e dividir o valor por 0.06) o resultado disso é o preço teto
     public BigDecimal getCeilingPrice(Integer stockId){
         LocalDate startDate = LocalDate.now();
         LocalDate endDate = startDate.minusMonths(12);
@@ -262,4 +262,128 @@ public class StocksService {
         return null;
     }
 
+    public List<SearchedStocksResponse> searchStocks(String ticker, String companyName, String category, String sector) {
+        List<SearchedStocksResponse> responseList = new ArrayList<SearchedStocksResponse>();
+        if ("small".equalsIgnoreCase(category)) {
+            List<SearchedStocksResponse> stocksList = stockRepository.searchAllSmall();
+            List<SearchedStocksResponse> filteredStocks = stocksList;
+            if (ticker != null){
+                filteredStocks = stocksList.stream()
+                        .filter(stock -> (stock.getTicker().equals(ticker))).collect(Collectors.toList());
+            }
+            if (companyName != null){
+                filteredStocks = stocksList.stream()
+                        .filter(stock -> (stock.getCompanyName().equals(companyName))).collect(Collectors.toList());
+            }
+            if (sector != null){
+                filteredStocks = stocksList.stream()
+                        .filter(stock -> (stock.getSector().equals(sector))).collect(Collectors.toList());
+            }
+            if (!filteredStocks.isEmpty()) {
+                for (SearchedStocksResponse stock : filteredStocks) {
+                    List<Prices> pricesList = priceRepository.findAllByStockIdIdOrderByPriceDateDesc(stock.getId());
+                    BigDecimal lastPrice = BigDecimal.ZERO;
+                    BigDecimal variationOneDay = BigDecimal.ZERO;
+                    if (!pricesList.isEmpty() && pricesList.size() >= 2) {
+                        lastPrice = pricesList.get(0).getValue();
+                        BigDecimal previousPrice = pricesList.get(1).getValue();
+                        variationOneDay = lastPrice.subtract(previousPrice);
+                    }
+                    SearchedStocksResponse stocksCompanies = new SearchedStocksResponse(
+                            stock.getCompanyId(),
+                            stock.getCompanyName(),
+                            stock.getId(),
+                            lastPrice,
+                            stock.getSector(),
+                            stock.getTicker(),
+                            variationOneDay
+                    );
+                    responseList.add(stocksCompanies);
+                }
+            } else {
+                throw new BadRequestNotFoundException(404, "Could not find stocks with ticker " + ticker + " or " + sector +  " or " + companyName + " or " + category);
+            }
+            return responseList;
+        } else if("large".equalsIgnoreCase(category)) {
+            List<SearchedStocksResponse> stocksList = stockRepository.searchAllLarge();
+            List<SearchedStocksResponse> filteredStocks = stocksList;
+            if (ticker != null) {
+                filteredStocks = stocksList.stream()
+                        .filter(stock -> (stock.getTicker().equals(ticker))).collect(Collectors.toList());
+            }
+            if (companyName != null) {
+                filteredStocks = stocksList.stream()
+                        .filter(stock -> (stock.getCompanyName().equals(companyName))).collect(Collectors.toList());
+            }
+            if (sector != null) {
+                filteredStocks = stocksList.stream()
+                        .filter(stock -> (stock.getSector().equals(sector))).collect(Collectors.toList());
+            }
+            if (!filteredStocks.isEmpty()) {
+                for (SearchedStocksResponse stock : filteredStocks) {
+                    List<Prices> pricesList = priceRepository.findAllByStockIdIdOrderByPriceDateDesc(stock.getId());
+                    BigDecimal lastPrice = BigDecimal.ZERO;
+                    BigDecimal variationOneDay = BigDecimal.ZERO;
+                    if (!pricesList.isEmpty() && pricesList.size() >= 2) {
+                        lastPrice = pricesList.get(0).getValue();
+                        BigDecimal previousPrice = pricesList.get(1).getValue();
+                        variationOneDay = lastPrice.subtract(previousPrice);
+                    }
+                    SearchedStocksResponse stocksCompanies = new SearchedStocksResponse(
+                            stock.getCompanyId(),
+                            stock.getCompanyName(),
+                            stock.getId(),
+                            lastPrice,
+                            stock.getSector(),
+                            stock.getTicker(),
+                            variationOneDay
+                    );
+                    responseList.add(stocksCompanies);
+                }
+            } else {
+                throw new BadRequestNotFoundException(404, "Could not find stocks with ticker " + ticker + " or " + sector + " or " + companyName + " or " + category);
+            }
+            return responseList;
+        } else {
+            List<SearchedStocksResponse> stocksList = stockRepository.searchAll();
+            List<SearchedStocksResponse> filteredStocks = stocksList;
+            if (ticker != null) {
+                filteredStocks = stocksList.stream()
+                        .filter(stock -> (stock.getTicker().equals(ticker))).collect(Collectors.toList());
+            }
+            if (companyName != null) {
+                filteredStocks = stocksList.stream()
+                        .filter(stock -> (stock.getCompanyName().equals(companyName))).collect(Collectors.toList());
+            }
+            if (sector != null) {
+                filteredStocks = stocksList.stream()
+                        .filter(stock -> (stock.getSector().equals(sector))).collect(Collectors.toList());
+            }
+            if (!filteredStocks.isEmpty()) {
+                for (SearchedStocksResponse stock : filteredStocks) {
+                    List<Prices> pricesList = priceRepository.findAllByStockIdIdOrderByPriceDateDesc(stock.getId());
+                    BigDecimal lastPrice = BigDecimal.ZERO;
+                    BigDecimal variationOneDay = BigDecimal.ZERO;
+                    if (!pricesList.isEmpty() && pricesList.size() >= 2) {
+                        lastPrice = pricesList.get(0).getValue();
+                        BigDecimal previousPrice = pricesList.get(1).getValue();
+                        variationOneDay = lastPrice.subtract(previousPrice);
+                    }
+                    SearchedStocksResponse stocksCompanies = new SearchedStocksResponse(
+                            stock.getCompanyId(),
+                            stock.getCompanyName(),
+                            stock.getId(),
+                            lastPrice,
+                            stock.getSector(),
+                            stock.getTicker(),
+                            variationOneDay
+                    );
+                    responseList.add(stocksCompanies);
+                }
+            } else {
+                throw new BadRequestNotFoundException(404, "Could not find stocks with ticker " + ticker + " or " + sector + " or " + companyName + " or " + category);
+            }
+            return responseList;
+        }
+    }
 }
