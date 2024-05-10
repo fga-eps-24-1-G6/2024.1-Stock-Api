@@ -18,6 +18,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -37,32 +38,32 @@ public class StocksService {
     }
 
     public StocksResponse getStocksByTicker (String ticker) {
-        Optional<Stocks> optStocks = stockRepository.findByTicker(ticker);
-        if (optStocks.isPresent()) {
-            Optional<Prices> optPrices = priceRepository.findLatestPriceByStockId(optStocks.get().getId());
-            String categorie = "LARGE";
-            BigDecimal tenBillion = new BigDecimal("10000000000");
-            int comnpareTo = tenBillion.compareTo(optStocks.get().getCompanies().getFirmValue());
-            if (comnpareTo < 0) {
-                categorie = "SMALL";
-            }
-            List<Prices> findAllPrices = priceRepository.findAllByStockIdIdOrderByPriceDate(optStocks.get().getId());
+        Stocks stocks = stockRepository.findByTicker(ticker)
+                .orElseThrow(() -> new BadRequestNotFoundException(404, "Could not find stocks with ticker: " + ticker));
 
-            BigDecimal currentPrice = findAllPrices.get(findAllPrices.size() - 1).getValue();
-            BigDecimal priceOneDayAgo = getPriceXDaysAgo(findAllPrices, 1);
-            BigDecimal variationOneDay = calculateVariation(currentPrice, priceOneDayAgo);
+        Prices prices = priceRepository.findLatestPriceByStockId(stocks.getId())
+                .orElseThrow(() -> new BadRequestNotFoundException(404, "Could not find prices with ticker: " + ticker));
 
-            BigDecimal priceOneMonthAgo = getPriceXMonthsAgo(findAllPrices, 1);
-            BigDecimal variationOneMonth = calculateVariation(currentPrice, priceOneMonthAgo);
-
-
-            BigDecimal priceTwelveMonthsAgo = getPriceXMonthsAgo(findAllPrices, 12);
-            BigDecimal variationTwelveMonths = calculateVariation(currentPrice, priceTwelveMonthsAgo);
-
-            StocksResponse stocksResponse = new StocksResponse(optStocks.get(), optPrices.get(), categorie, variationOneDay, variationOneMonth, variationTwelveMonths, optStocks.get().getCompanies().getName());
-            return stocksResponse;
+        String categorie = "LARGE";
+        BigDecimal tenBillion = new BigDecimal("10000000000");
+        int comnpareTo = tenBillion.compareTo(stocks.getCompanies().getFirmValue());
+        if (comnpareTo < 0) {
+            categorie = "SMALL";
         }
-        throw new BadRequestNotFoundException(404, "Could not find stocks with ticker " + ticker);
+        List<Prices> findAllPrices = priceRepository.findAllByStockIdIdOrderByPriceDate(stocks.getId());
+
+        BigDecimal currentPrice = findAllPrices.get(findAllPrices.size() - 1).getValue();
+        BigDecimal priceOneDayAgo = getPriceXDaysAgo(findAllPrices, 1);
+        BigDecimal variationOneDay = calculateVariation(currentPrice, priceOneDayAgo);
+
+        BigDecimal priceOneMonthAgo = getPriceXMonthsAgo(findAllPrices, 1);
+        BigDecimal variationOneMonth = calculateVariation(currentPrice, priceOneMonthAgo);
+
+
+        BigDecimal priceTwelveMonthsAgo = getPriceXMonthsAgo(findAllPrices, 12);
+        BigDecimal variationTwelveMonths = calculateVariation(currentPrice, priceTwelveMonthsAgo);
+
+        return new StocksResponse(stocks, prices, categorie, variationOneDay, variationOneMonth, variationTwelveMonths, stocks.getCompanies().getName());
     }
 
     public IndicatorsResponse getIndicatorsFromStocksByTicker(String ticker) {
@@ -175,23 +176,21 @@ public class StocksService {
     }
 
     private static BigDecimal getPriceXDaysAgo(List<Prices> prices, int days) {
-        LocalDate targetDate = prices.get(prices.size() - 1).getPriceDate().minusDays(days);
+        LocalDate targetDate = LocalDate.now().minusDays(days);
         return getPriceAtDate(prices, targetDate);
     }
 
-    private static BigDecimal getPriceXMonthsAgo(List<Prices> prices, int months) {
-        LocalDate targetDate = prices.get(prices.size() - 1).getPriceDate().minusMonths(months);
+    public static BigDecimal getPriceXMonthsAgo(List<Prices> prices, int months) {
+        LocalDate targetDate = LocalDate.now().minusMonths(months);
         return getPriceAtDate(prices, targetDate);
     }
 
-    private static BigDecimal getPriceAtDate(List<Prices> prices, LocalDate targetDate) {
-        for (int i = prices.size() - 1; i >= 0; i--) {
-            Prices price = prices.get(i);
-            if (price.getPriceDate().isBefore(targetDate) || price.getPriceDate().isEqual(targetDate)) {
-                return price.getValue();
-            }
-        }
-        return null;
+    public static BigDecimal getPriceAtDate(List<Prices> prices, LocalDate targetDate) {
+        Optional<Prices> priceAtDate = prices.stream()
+                .filter(price -> price.getPriceDate().isBefore(targetDate) || price.getPriceDate().isEqual(targetDate))
+                .max(Comparator.comparing(Prices::getPriceDate));
+
+        return priceAtDate.map(Prices::getValue).orElse(BigDecimal.ZERO);
     }
 
 }
