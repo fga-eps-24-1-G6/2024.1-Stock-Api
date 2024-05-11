@@ -67,106 +67,94 @@ public class StocksService {
     }
 
     public IndicatorsResponse getIndicatorsFromStocksByTicker(String ticker) {
-        Optional<Stocks> optStocks = stockRepository.findByTicker(ticker);
-        List<IndicatorValueResponse> indicators = new ArrayList<IndicatorValueResponse>();
-        if (optStocks.isPresent()) {
-            Optional<Prices> optPrices = priceRepository.findLatestPriceByStockId(optStocks.get().getId());
+        Stocks stocks = stockRepository.findByTicker(ticker)
+                .orElseThrow(() -> new BadRequestNotFoundException(404, "Could not find stocks with ticker: " + ticker));
 
-            if (optPrices.isPresent()) {
-                Optional<BalanceSheet> optBalanceSheets = balanceSheetsRepository.findLatestByCompanyId(optStocks.get().getCompanies().getId());
+        Prices prices = priceRepository.findLatestPriceByStockId(stocks.getId())
+                .orElseThrow(() -> new BadRequestNotFoundException(404, "Could not find prices with ticker: " + ticker));
 
-                int scale = 10;
-                RoundingMode roundingMode = RoundingMode.HALF_UP;
-                BigDecimal value = optPrices.get().getValue();
-                BigDecimal netProfit = optBalanceSheets.get().getNetProfit();
-                BigDecimal equity = optBalanceSheets.get().getEquity();
+        BalanceSheet balanceSheet = balanceSheetsRepository.findLatestByCompanyId(stocks.getCompanies().getId())
+                .orElseThrow(() -> new BadRequestNotFoundException(404, "Could not find balances sheet with ticker: " + ticker));
 
-                BigDecimal lpaValue = netProfit.divide(optStocks.get().getCompanies().getNumberOfPapers(), scale, roundingMode);
-                BigDecimal plValue = value.divide(lpaValue, scale, roundingMode);
-                IndicatorValueResponse plResponse = new IndicatorValueResponse("P/L", plValue);
-                indicators.add(plResponse);
+        List<IndicatorValueResponse> indicators = new ArrayList<>();
 
-                BigDecimal vpaValue = equity.divide(optStocks.get().getCompanies().getNumberOfPapers(), scale, roundingMode);
-                BigDecimal pvpValue = value.divide(vpaValue, scale, roundingMode);
-                IndicatorValueResponse pvpResponse = new IndicatorValueResponse("P/VP", pvpValue);
-                indicators.add(pvpResponse);
+        int scale = 10;
+        RoundingMode roundingMode = RoundingMode.HALF_UP;
 
-                // Rever questao de calculo de valores de proventos, Batista explicou certinho
-//                List<Dividends> optDividends = dividendsRepository.findByStocksId(optStocks.get().getId());
-//                BigDecimal divYieldValue = optDividends.get().getValue().divide(value, scale, roundingMode);
-//                IndicatorValueResponse divYieldResponse = new IndicatorValueResponse("DIV YIELD", divYieldValue);
-//                indicators.add(divYieldResponse);
-//
-//                BigDecimal payoutValue = optDividends.get().getValue().divide(netProfit, scale, roundingMode);
-//                IndicatorValueResponse payoutResponse = new IndicatorValueResponse("PAYOUT", payoutValue);
-//                indicators.add(payoutResponse);
-//
-//                BigDecimal netMarginValue = optBalanceSheets.get().getNetProfit().divide(optBalanceSheets.get().getNetRevenue(), scale, roundingMode);
-//                IndicatorValueResponse netMarginResponse = new IndicatorValueResponse("MARGEM LÍQ", netMarginValue);
-//                indicators.add(netMarginResponse);
-//
-//                BigDecimal grossMarginValue = optBalanceSheets.get().getGrossProfit().divide(optBalanceSheets.get().getNetRevenue(), scale, roundingMode);
-//                IndicatorValueResponse grossMarginResponse = new IndicatorValueResponse("MARGEM BRUTA", grossMarginValue);
-//                indicators.add(grossMarginResponse);
-//
-//                BigDecimal ebitMarginValue = optBalanceSheets.get().getEbit().divide(optBalanceSheets.get().getNetRevenue(), scale, roundingMode);
-//                IndicatorValueResponse ebitMarginResponse = new IndicatorValueResponse("MARGEM EBIT", ebitMarginValue);
-//                indicators.add(ebitMarginResponse);
-//
-//                BigDecimal marketValue = optPrices.get().getValue().multiply(optStocks.get().getCompanies().getNumberOfPapers());
-//
-//                BigDecimal evEbitValue = marketValue.divide(optBalanceSheets.get().getEbit(), scale, roundingMode);
-//                IndicatorValueResponse evEbitResponse = new IndicatorValueResponse("EV/EBIT", evEbitValue);
-//                indicators.add(evEbitResponse);
-//
-//                BigDecimal evEbitdaValue = marketValue.divide(optBalanceSheets.get().getEbitda(), scale, roundingMode);
-//                IndicatorValueResponse evEbitdaResponse = new IndicatorValueResponse("EV/EBITDA", evEbitdaValue);
-//                indicators.add(evEbitdaResponse);
-//
-//                IndicatorValueResponse vpaResponse = new IndicatorValueResponse("VPA", vpaValue);
-//                indicators.add(vpaResponse);
-//
-//                IndicatorValueResponse lpaResponse = new IndicatorValueResponse("LPA", lpaValue);
-//                indicators.add(lpaResponse);
-//
-//                BigDecimal roeValue = optBalanceSheets.get().getNetProfit().divide(optBalanceSheets.get().getEquity(), scale, roundingMode);
-//                IndicatorValueResponse roeResponse = new IndicatorValueResponse("ROE", roeValue);
-//                indicators.add(roeResponse);
-//
-//                BigDecimal roicValue = optBalanceSheets.get().getEbit().divide(optBalanceSheets.get().getLiabilities(), scale, roundingMode);
-//                IndicatorValueResponse roicResponse = new IndicatorValueResponse("ROIC", roicValue);
-//                indicators.add(roicResponse);
-//
-//                BigDecimal roaValue = optBalanceSheets.get().getNetProfit().divide(optBalanceSheets.get().getAssets(), scale, roundingMode);
-//                IndicatorValueResponse roaResponse = new IndicatorValueResponse("ROA", roaValue);
-//                indicators.add(roaResponse);
-//
-//                // Rever lógica de cálculo de CAGR LUCRO e CAGR REC
-//                BigDecimal profitCagrValue = optBalanceSheets.get().getNetProfit().multiply(optBalanceSheets.get().getNetProfit());
-//                IndicatorValueResponse profitCagrResponse = new IndicatorValueResponse("CAGR LUCRO", profitCagrValue);
-//                indicators.add(profitCagrResponse);
-//
-//                BigDecimal cagrRecValue = optBalanceSheets.get().getNetRevenue().multiply(optBalanceSheets.get().getNetRevenue());
-//                IndicatorValueResponse cagrRecResponse = new IndicatorValueResponse("CAGR REC", cagrRecValue);
-//                indicators.add(cagrRecResponse);
-//
-//                BigDecimal divLiqPatLiqValue = optBalanceSheets.get().getNetDebt().divide(optBalanceSheets.get().getEquity(), scale, roundingMode);
-//                IndicatorValueResponse divLiqPatLiqResponse = new IndicatorValueResponse("DÍV LÍQ/PAT LÍQ", divLiqPatLiqValue);
-//                indicators.add(divLiqPatLiqResponse);
-//
-//                BigDecimal divLiqEbit = optBalanceSheets.get().getNetDebt().divide(optBalanceSheets.get().getEbit(), scale, roundingMode);
-//                IndicatorValueResponse divLiqEbitResponse = new IndicatorValueResponse("DÍV LÍQ/EBIT", divLiqEbit);
-//                indicators.add(divLiqEbitResponse);
+        BigDecimal value = prices.getValue();
+        BigDecimal netProfit = balanceSheet.getNetProfit();
+        BigDecimal equity = balanceSheet.getEquity();
+        BigDecimal netRevenue = balanceSheet.getNetRevenue();
+        BigDecimal ebit = balanceSheet.getEbit();
+        BigDecimal ebitda = balanceSheet.getEbitda();
+        BigDecimal assets = balanceSheet.getAssets();
+        BigDecimal liabilities = balanceSheet.getLiabilities();
+        BigDecimal netDebt = balanceSheet.getNetDebt();
+        BigDecimal numberOfPapers = stocks.getCompanies().getNumberOfPapers();
 
-                return new IndicatorsResponse(indicators);
+        BigDecimal lpaValue = netProfit.divide(numberOfPapers, scale, roundingMode);
+        indicators.add(new IndicatorValueResponse("LPA", lpaValue));
 
-            } else {
-                throw new BadRequestNotFoundException(404, "Could not find stocks with ticker " + ticker);
-            }
+        BigDecimal plValue = value.divide(lpaValue, scale, roundingMode);
+        indicators.add(new IndicatorValueResponse("P/L", plValue));
 
+        BigDecimal vpaValue = equity.divide(numberOfPapers, scale, roundingMode);
+        indicators.add(new IndicatorValueResponse("VPA", vpaValue));
+
+        BigDecimal pvpValue = value.divide(vpaValue, scale, roundingMode);
+        indicators.add(new IndicatorValueResponse("P/VP", pvpValue));
+
+        BigDecimal divYieldValue = BigDecimal.ZERO;
+        BigDecimal payoutValue = BigDecimal.ZERO;
+        List<Dividends> dividends = dividendsRepository.findByStocksId(stocks.getId());
+        if (!dividends.isEmpty()) {
+            BigDecimal dividendValue = dividends.get(0).getValue();
+            divYieldValue = dividendValue.divide(value, scale, roundingMode);
+            payoutValue = dividendValue.divide(netProfit, scale, roundingMode);
         }
+        indicators.add(new IndicatorValueResponse("DIV YIELD", divYieldValue));
+        indicators.add(new IndicatorValueResponse("PAYOUT", payoutValue));
 
-        throw new BadRequestNotFoundException(404, "Could not find stocks with ticker " + ticker);
+        BigDecimal netMarginValue = netProfit.divide(netRevenue, scale, roundingMode);
+        indicators.add(new IndicatorValueResponse("MARGEM LÍQ", netMarginValue));
+
+        BigDecimal grossMarginValue = balanceSheet.getGrossProfit().divide(netRevenue, scale, roundingMode);
+        indicators.add(new IndicatorValueResponse("MARGEM BRUTA", grossMarginValue));
+
+        BigDecimal ebitMarginValue = ebit.divide(netRevenue, scale, roundingMode);
+        indicators.add(new IndicatorValueResponse("MARGEM EBIT", ebitMarginValue));
+
+        BigDecimal marketValue = value.multiply(numberOfPapers);
+
+        BigDecimal evEbitValue = marketValue.divide(ebit, scale, roundingMode);
+        indicators.add(new IndicatorValueResponse("EV/EBIT", evEbitValue));
+
+        BigDecimal evEbitdaValue = marketValue.divide(ebitda, scale, roundingMode);
+        indicators.add(new IndicatorValueResponse("EV/EBITDA", evEbitdaValue));
+
+        BigDecimal roeValue = netProfit.divide(equity, scale, roundingMode);
+        indicators.add(new IndicatorValueResponse("ROE", roeValue));
+
+        BigDecimal roicValue = ebit.divide(liabilities, scale, roundingMode);
+        indicators.add(new IndicatorValueResponse("ROIC", roicValue));
+
+        BigDecimal roaValue = netProfit.divide(assets, scale, roundingMode);
+        indicators.add(new IndicatorValueResponse("ROA", roaValue));
+
+        BigDecimal divLiqPatLiqValue = netDebt.divide(equity, scale, roundingMode);
+        indicators.add(new IndicatorValueResponse("DÍV LÍQ/PAT LÍQ", divLiqPatLiqValue));
+
+        BigDecimal divLiqEbit = netDebt.divide(ebit, scale, roundingMode);
+        indicators.add(new IndicatorValueResponse("DÍV LÍQ/EBIT", divLiqEbit));
+
+        // @TODO: calcular CAGR LUCRO e CAGR REC
+        BigDecimal profitCagrValue = BigDecimal.ZERO;
+        indicators.add(new IndicatorValueResponse("CAGR LUCRO", profitCagrValue));
+
+        BigDecimal cagrRecValue = BigDecimal.ZERO;
+        indicators.add(new IndicatorValueResponse("CAGR REC", cagrRecValue));
+
+        return new IndicatorsResponse(indicators);
     }
 
     private static BigDecimal calculateVariation(BigDecimal current, BigDecimal previous) {
