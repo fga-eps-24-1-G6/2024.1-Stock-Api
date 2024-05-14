@@ -1,17 +1,13 @@
 package com.stocksapi.service;
 
-import com.stocksapi.dto.IndicatorValueResponse;
-import com.stocksapi.dto.IndicatorsResponse;
-import com.stocksapi.dto.StocksResponse;
+import com.stocksapi.dto.*;
 import com.stocksapi.exception.BadRequestNotFoundException;
 import com.stocksapi.model.BalanceSheet;
 import com.stocksapi.model.Dividends;
 import com.stocksapi.model.Prices;
 import com.stocksapi.model.Stocks;
-import com.stocksapi.repository.BalanceSheetsRepository;
-import com.stocksapi.repository.DividendsRepository;
-import com.stocksapi.repository.PriceRepository;
-import com.stocksapi.repository.StockRepository;
+import com.stocksapi.dto.SearchedStocksResponse;
+import com.stocksapi.repository.*;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -22,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class StocksService {
@@ -30,12 +27,14 @@ public class StocksService {
     private final PriceRepository priceRepository;
     private final BalanceSheetsRepository balanceSheetsRepository;
     private final DividendsRepository dividendsRepository;
+    private final CompaniesRepository companiesRepository;
 
-    public StocksService(StockRepository stockRepository, PriceRepository priceRepository, BalanceSheetsRepository balanceSheetsRepository, DividendsRepository dividendsRepository) {
+    public StocksService(StockRepository stockRepository, PriceRepository priceRepository, BalanceSheetsRepository balanceSheetsRepository, DividendsRepository dividendsRepository, CompaniesRepository companiesRepository) {
         this.stockRepository = stockRepository;
         this.priceRepository = priceRepository;
         this.balanceSheetsRepository = balanceSheetsRepository;
         this.dividendsRepository = dividendsRepository;
+        this.companiesRepository = companiesRepository;
     }
 
     public StocksResponse getStocksByTicker (String ticker) {
@@ -65,6 +64,28 @@ public class StocksService {
         BigDecimal variationTwelveMonths = calculateVariation(currentPrice, priceTwelveMonthsAgo);
 
         return new StocksResponse(stocks, prices, categorie, variationOneDay, variationOneMonth, variationTwelveMonths, stocks.getCompanies().getName());
+    }
+
+    public BigDecimal getCeilingPrice(Integer stockId){
+        LocalDate startDate = LocalDate.now();
+        LocalDate endDate = startDate.minusMonths(12);
+        List<Dividends> dividendsList = dividendsRepository.findLastTwelveMonthsDividendsByStockId(stockId, startDate, endDate);
+
+        if (!dividendsList.isEmpty()){
+
+            BigDecimal total = dividendsList.stream()
+                    .map(dividends -> dividends.getValue())
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            BigDecimal ceilingPrice = total.divide(BigDecimal.valueOf(0.06), 2, BigDecimal.ROUND_HALF_UP);
+
+            return ceilingPrice;
+
+        } else{
+            throw new BadRequestNotFoundException(404, "Could not find dividends with stockId: " + stockId);
+
+        }
+
     }
 
     public IndicatorsResponse getIndicatorsFromStocksByTicker(String ticker) {
@@ -223,6 +244,4 @@ public class StocksService {
 
         return result.subtract(BigDecimal.ONE);
     }
-
-
 }
