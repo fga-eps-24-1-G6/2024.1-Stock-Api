@@ -15,6 +15,7 @@ import com.stocksapi.repository.StockRepository;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.MathContext;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -75,6 +76,8 @@ public class StocksService {
 
         BalanceSheet balanceSheet = balanceSheetsRepository.findLatestByCompanyId(stocks.getCompanies().getId())
                 .orElseThrow(() -> new BadRequestNotFoundException(404, "Could not find balances sheet with ticker: " + ticker));
+
+        List<BalanceSheet> findAllBalances = balanceSheetsRepository.findAllByCompaniesId(stocks.getCompanies().getId());
 
         List<IndicatorValueResponse> indicators = new ArrayList<>();
 
@@ -147,11 +150,10 @@ public class StocksService {
         BigDecimal divLiqEbit = netDebt.divide(ebit, scale, roundingMode);
         indicators.add(new IndicatorValueResponse("DÍV LÍQ/EBIT", divLiqEbit));
 
-        // @TODO: calcular CAGR LUCRO e CAGR REC
-        BigDecimal profitCagrValue = BigDecimal.ZERO;
+        BigDecimal profitCagrValue = calculateProfitCAGR(findAllBalances);
         indicators.add(new IndicatorValueResponse("CAGR LUCRO", profitCagrValue));
 
-        BigDecimal cagrRecValue = BigDecimal.ZERO;
+        BigDecimal cagrRecValue = calculateRevenueCAGR(findAllBalances);
         indicators.add(new IndicatorValueResponse("CAGR REC", cagrRecValue));
 
         return new IndicatorsResponse(indicators);
@@ -159,7 +161,7 @@ public class StocksService {
 
     private static BigDecimal calculateVariation(BigDecimal current, BigDecimal previous) {
         return current.subtract(previous)
-                .divide(previous, 4, BigDecimal.ROUND_HALF_EVEN)
+                .divide(previous, 4, RoundingMode.HALF_EVEN)
                 .multiply(BigDecimal.valueOf(100));
     }
 
@@ -180,5 +182,47 @@ public class StocksService {
 
         return priceAtDate.map(Prices::getValue).orElse(BigDecimal.ZERO);
     }
+
+    public static BigDecimal calculateProfitCAGR(List<BalanceSheet> balances) {
+        BigDecimal last12MonthsProfit = BigDecimal.ZERO;
+        BigDecimal last5YearsProfit = BigDecimal.ZERO;
+        int numberOfYears = 5;
+
+        for (BalanceSheet balance : balances) {
+            last12MonthsProfit = last12MonthsProfit.add(balance.getNetProfit());
+        }
+
+        for (int i = 0; i < numberOfYears; i++) {
+            last5YearsProfit = last5YearsProfit.add(balances.get(i).getNetProfit());
+        }
+
+        return calculateCAGR(last5YearsProfit, last12MonthsProfit, numberOfYears);
+    }
+
+    public static BigDecimal calculateRevenueCAGR(List<BalanceSheet> balances) {
+        BigDecimal last12MonthsRevenue = BigDecimal.ZERO;
+        BigDecimal last5YearsRevenue = BigDecimal.ZERO;
+        int numberOfYears = 5;
+
+        for (BalanceSheet balance : balances) {
+            last12MonthsRevenue = last12MonthsRevenue.add(balance.getNetRevenue());
+        }
+
+        for (int i = 0; i < numberOfYears; i++) {
+            last5YearsRevenue = last5YearsRevenue.add(balances.get(i).getNetRevenue());
+        }
+
+        return calculateCAGR(last5YearsRevenue, last12MonthsRevenue, numberOfYears);
+    }
+
+    private static BigDecimal calculateCAGR(BigDecimal initialValue, BigDecimal finalValue, int periods) {
+        BigDecimal base = finalValue.divide(initialValue, 10, RoundingMode.HALF_UP);
+        BigDecimal exponent = BigDecimal.ONE.divide(new BigDecimal(periods), 10, RoundingMode.HALF_UP);
+        MathContext mc = new MathContext(10);
+        BigDecimal result = BigDecimal.valueOf(Math.exp(exponent.doubleValue() * Math.log(base.doubleValue()))).round(mc);
+
+        return result.subtract(BigDecimal.ONE);
+    }
+
 
 }
