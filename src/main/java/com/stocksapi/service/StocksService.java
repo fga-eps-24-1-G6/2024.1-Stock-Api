@@ -1,17 +1,13 @@
 package com.stocksapi.service;
 
-import com.stocksapi.dto.IndicatorValueResponse;
-import com.stocksapi.dto.IndicatorsResponse;
-import com.stocksapi.dto.StocksResponse;
+import com.stocksapi.dto.*;
 import com.stocksapi.exception.BadRequestNotFoundException;
 import com.stocksapi.model.BalanceSheet;
 import com.stocksapi.model.Dividends;
 import com.stocksapi.model.Prices;
 import com.stocksapi.model.Stocks;
-import com.stocksapi.repository.BalanceSheetsRepository;
-import com.stocksapi.repository.DividendsRepository;
-import com.stocksapi.repository.PriceRepository;
-import com.stocksapi.repository.StockRepository;
+import com.stocksapi.dto.SearchedStocksResponse;
+import com.stocksapi.repository.*;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -20,6 +16,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class StocksService {
@@ -28,15 +25,61 @@ public class StocksService {
     private final PriceRepository priceRepository;
     private final BalanceSheetsRepository balanceSheetsRepository;
     private final DividendsRepository dividendsRepository;
+    private final CompaniesRepository companiesRepository;
 
-    public StocksService(StockRepository stockRepository, PriceRepository priceRepository, BalanceSheetsRepository balanceSheetsRepository, DividendsRepository dividendsRepository) {
+    public StocksService(StockRepository stockRepository, PriceRepository priceRepository, BalanceSheetsRepository balanceSheetsRepository, DividendsRepository dividendsRepository, CompaniesRepository companiesRepository) {
         this.stockRepository = stockRepository;
         this.priceRepository = priceRepository;
         this.balanceSheetsRepository = balanceSheetsRepository;
         this.dividendsRepository = dividendsRepository;
+        this.companiesRepository = companiesRepository;
     }
 
-    public StocksResponse getStocksByTicker (String ticker) {
+    public ValuationResponse getValuationByTicker(String ticker) {
+        Optional<Stocks> optStocks = stockRepository.findByTicker(ticker);
+        if (optStocks.isPresent()) {
+
+            Integer companyId = optStocks.get().getCompanies().getId();
+            BigDecimal result = getLPA(companyId).multiply(getVPA(companyId)).multiply(BigDecimal.valueOf(22.5));
+            BigDecimal ceilingPrice = getCeilingPrice(optStocks.get().getId());
+            TargetPriceResponse targetPriceResponse = new TargetPriceResponse(Math.sqrt(result.doubleValue()), "PREÇO ALVO" );
+            CeilingPriceResponse ceilingPriceResponse = new CeilingPriceResponse(ceilingPrice, "PREÇO TETO");
+            ValuationResponse valuationResponse = new ValuationResponse(targetPriceResponse, ceilingPriceResponse);
+            return valuationResponse;
+        }
+        throw new BadRequestNotFoundException(404, "Could not find stocks with ticker " + ticker);
+
+    }
+
+    private BigDecimal getLPA(int companyId) { //metodo auxiliar
+        BigDecimal numberOfPapers;
+        BigDecimal netProfit;
+        BalanceSheet latestBalanceSheet = balanceSheetsRepository.findLatestBalanceSheetByCompanyId(companyId)[0];
+        netProfit = latestBalanceSheet.getNetProfit();
+        numberOfPapers = companiesRepository.findById(companyId).get().getNumberOfPapers();
+        return netProfit.divide(numberOfPapers, 2, BigDecimal.ROUND_HALF_UP);
+
+    }
+
+    private BigDecimal getPL(Integer stockId, Integer companyId) {
+            List<Prices> findAllPrices = priceRepository.findAllByStockIdIdOrderByPriceDateDesc(stockId);
+            BigDecimal currentPrice = findAllPrices.get(findAllPrices.size() - 1).getValue();
+            return currentPrice.divide(getLPA(companyId), 2,BigDecimal.ROUND_HALF_UP) ;
+
+    }
+
+    private BigDecimal getVPA(int companyId) { //metodo auxiliar
+        BigDecimal numberOfPapers;
+        BigDecimal equity;
+        BalanceSheet latestBalanceSheet = balanceSheetsRepository.findLatestBalanceSheetByCompanyId(companyId)[0];
+        equity= latestBalanceSheet.getEquity();
+        numberOfPapers = companiesRepository.findById(companyId).get().getNumberOfPapers();
+        return equity.divide(numberOfPapers, 2, BigDecimal.ROUND_HALF_UP);
+
+    }
+
+
+    public StocksResponse getStocksByTicker(String ticker) {
         Optional<Stocks> optStocks = stockRepository.findByTicker(ticker);
         if (optStocks.isPresent()) {
             Optional<Prices> optPrices = priceRepository.findLatestPriceByStockId(optStocks.get().getId());
@@ -46,7 +89,7 @@ public class StocksService {
             if (comnpareTo < 0) {
                 categorie = "SMALL";
             }
-            List<Prices> findAllPrices = priceRepository.findAllByStockIdIdOrderByPriceDate(optStocks.get().getId());
+            List<Prices> findAllPrices = priceRepository.findAllByStockIdIdOrderByPriceDateDesc(optStocks.get().getId());
 
             BigDecimal currentPrice = findAllPrices.get(findAllPrices.size() - 1).getValue();
             BigDecimal priceOneDayAgo = getPriceXDaysAgo(findAllPrices, 1);
@@ -65,6 +108,28 @@ public class StocksService {
         throw new BadRequestNotFoundException(404, "Could not find stocks with ticker " + ticker);
     }
 
+    public BigDecimal getCeilingPrice(Integer stockId){
+        LocalDate startDate = LocalDate.now();
+        LocalDate endDate = startDate.minusMonths(12);
+        List<Dividends> dividendsList = dividendsRepository.findLastTwelveMonthsDividendsByStockId(stockId, startDate, endDate);
+
+        if (!dividendsList.isEmpty()){
+
+            BigDecimal total = dividendsList.stream()
+                    .map(dividends -> dividends.getValue())
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            BigDecimal ceilingPrice = total.divide(BigDecimal.valueOf(0.06), 2, BigDecimal.ROUND_HALF_UP);
+
+            return ceilingPrice;
+
+        } else{
+            throw new BadRequestNotFoundException(404, "Could not find dividends with stockId: " + stockId);
+
+        }
+
+    }
+
     public IndicatorsResponse getIndicatorsFromStocksByTicker(String ticker) {
         Optional<Stocks> optStocks = stockRepository.findByTicker(ticker);
         List<IndicatorValueResponse> indicators = new ArrayList<IndicatorValueResponse>();
@@ -72,92 +137,95 @@ public class StocksService {
             Optional<Prices> optPrices = priceRepository.findLatestPriceByStockId(optStocks.get().getId());
 
             if (optPrices.isPresent()) {
-                Optional<BalanceSheet> optBalanceSheets = balanceSheetsRepository.findLatestByCompanyId(optStocks.get().getCompanies().getId());
+                Optional<BalanceSheet[]> optBalanceSheets = balanceSheetsRepository.findLatestByCompanyId(optStocks.get().getCompanies().getId());
+                if (optBalanceSheets.isPresent()) {
+                    BalanceSheet latestBalanceSheet = optBalanceSheets.get()[0];
+                    int scale = 10;
+                    RoundingMode roundingMode = RoundingMode.HALF_UP;
+                    BigDecimal value = optPrices.get().getValue();
+                    BigDecimal netProfit = latestBalanceSheet.getNetProfit();
+                    BigDecimal equity = latestBalanceSheet.getEquity();
 
-                int scale = 10;
-                RoundingMode roundingMode = RoundingMode.HALF_UP;
-                BigDecimal value = optPrices.get().getValue();
-                BigDecimal netProfit = optBalanceSheets.get().getNetProfit();
-                BigDecimal equity = optBalanceSheets.get().getEquity();
+                    BigDecimal lpaValue = netProfit.divide(optStocks.get().getCompanies().getNumberOfPapers(), scale, roundingMode);
+                    BigDecimal plValue = value.divide(lpaValue, scale, roundingMode);
+                    IndicatorValueResponse plResponse = new IndicatorValueResponse("P/L", plValue);
+                    indicators.add(plResponse);
 
-                BigDecimal lpaValue = netProfit.divide(optStocks.get().getCompanies().getNumberOfPapers(), scale, roundingMode);
-                BigDecimal plValue = value.divide(lpaValue, scale, roundingMode);
-                IndicatorValueResponse plResponse = new IndicatorValueResponse("P/L", plValue);
-                indicators.add(plResponse);
+                    BigDecimal vpaValue = equity.divide(optStocks.get().getCompanies().getNumberOfPapers(), scale, roundingMode);
+                    BigDecimal pvpValue = value.divide(vpaValue, scale, roundingMode);
+                    IndicatorValueResponse pvpResponse = new IndicatorValueResponse("P/VP", pvpValue);
+                    indicators.add(pvpResponse);
 
-                BigDecimal vpaValue = equity.divide(optStocks.get().getCompanies().getNumberOfPapers(), scale, roundingMode);
-                BigDecimal pvpValue = value.divide(vpaValue, scale, roundingMode);
-                IndicatorValueResponse pvpResponse = new IndicatorValueResponse("P/VP", pvpValue);
-                indicators.add(pvpResponse);
+                    // Rever questao de calculo de valores de proventos, Batista explicou certinho
+                    Optional<Dividends> optDividends = dividendsRepository.findByStocksId(optStocks.get().getId());
+                    BigDecimal divYieldValue = optDividends.get().getValue().divide(value, scale, roundingMode);
+                    IndicatorValueResponse divYieldResponse = new IndicatorValueResponse("DIV YIELD", divYieldValue);
+                    indicators.add(divYieldResponse);
 
-                // Rever questao de calculo de valores de proventos, Batista explicou certinho
-                Optional<Dividends> optDividends = dividendsRepository.findByStocksId(optStocks.get().getId());
-                BigDecimal divYieldValue = optDividends.get().getValue().divide(value, scale, roundingMode);
-                IndicatorValueResponse divYieldResponse = new IndicatorValueResponse("DIV YIELD", divYieldValue);
-                indicators.add(divYieldResponse);
+                    BigDecimal payoutValue = optDividends.get().getValue().divide(netProfit, scale, roundingMode);
+                    IndicatorValueResponse payoutResponse = new IndicatorValueResponse("PAYOUT", payoutValue);
+                    indicators.add(payoutResponse);
 
-                BigDecimal payoutValue = optDividends.get().getValue().divide(netProfit, scale, roundingMode);
-                IndicatorValueResponse payoutResponse = new IndicatorValueResponse("PAYOUT", payoutValue);
-                indicators.add(payoutResponse);
+                    BigDecimal netMarginValue = latestBalanceSheet.getNetProfit().divide(latestBalanceSheet.getNetRevenue(), scale, roundingMode);
+                    IndicatorValueResponse netMarginResponse = new IndicatorValueResponse("MARGEM LÍQ", netMarginValue);
+                    indicators.add(netMarginResponse);
 
-                BigDecimal netMarginValue = optBalanceSheets.get().getNetProfit().divide(optBalanceSheets.get().getNetRevenue(), scale, roundingMode);
-                IndicatorValueResponse netMarginResponse = new IndicatorValueResponse("MARGEM LÍQ", netMarginValue);
-                indicators.add(netMarginResponse);
+                    BigDecimal grossMarginValue = latestBalanceSheet.getGrossProfit().divide(latestBalanceSheet.getNetRevenue(), scale, roundingMode);
+                    IndicatorValueResponse grossMarginResponse = new IndicatorValueResponse("MARGEM BRUTA", grossMarginValue);
+                    indicators.add(grossMarginResponse);
 
-                BigDecimal grossMarginValue = optBalanceSheets.get().getGrossProfit().divide(optBalanceSheets.get().getNetRevenue(), scale, roundingMode);
-                IndicatorValueResponse grossMarginResponse = new IndicatorValueResponse("MARGEM BRUTA", grossMarginValue);
-                indicators.add(grossMarginResponse);
+                    BigDecimal ebitMarginValue = latestBalanceSheet.getEbit().divide(latestBalanceSheet.getNetRevenue(), scale, roundingMode);
+                    IndicatorValueResponse ebitMarginResponse = new IndicatorValueResponse("MARGEM EBIT", ebitMarginValue);
+                    indicators.add(ebitMarginResponse);
 
-                BigDecimal ebitMarginValue = optBalanceSheets.get().getEbit().divide(optBalanceSheets.get().getNetRevenue(), scale, roundingMode);
-                IndicatorValueResponse ebitMarginResponse = new IndicatorValueResponse("MARGEM EBIT", ebitMarginValue);
-                indicators.add(ebitMarginResponse);
+                    BigDecimal marketValue = optPrices.get().getValue().multiply(optStocks.get().getCompanies().getNumberOfPapers());
 
-                BigDecimal marketValue = optPrices.get().getValue().multiply(optStocks.get().getCompanies().getNumberOfPapers());
+                    BigDecimal evEbitValue = marketValue.divide(latestBalanceSheet.getEbit(), scale, roundingMode);
+                    IndicatorValueResponse evEbitResponse = new IndicatorValueResponse("EV/EBIT", evEbitValue);
+                    indicators.add(evEbitResponse);
 
-                BigDecimal evEbitValue = marketValue.divide(optBalanceSheets.get().getEbit(), scale, roundingMode);
-                IndicatorValueResponse evEbitResponse = new IndicatorValueResponse("EV/EBIT", evEbitValue);
-                indicators.add(evEbitResponse);
+                    BigDecimal evEbitdaValue = marketValue.divide(latestBalanceSheet.getEbitda(), scale, roundingMode);
+                    IndicatorValueResponse evEbitdaResponse = new IndicatorValueResponse("EV/EBITDA", evEbitdaValue);
+                    indicators.add(evEbitdaResponse);
 
-                BigDecimal evEbitdaValue = marketValue.divide(optBalanceSheets.get().getEbitda(), scale, roundingMode);
-                IndicatorValueResponse evEbitdaResponse = new IndicatorValueResponse("EV/EBITDA", evEbitdaValue);
-                indicators.add(evEbitdaResponse);
+                    IndicatorValueResponse vpaResponse = new IndicatorValueResponse("VPA", vpaValue);
+                    indicators.add(vpaResponse);
 
-                IndicatorValueResponse vpaResponse = new IndicatorValueResponse("VPA", vpaValue);
-                indicators.add(vpaResponse);
+                    IndicatorValueResponse lpaResponse = new IndicatorValueResponse("LPA", lpaValue);
+                    indicators.add(lpaResponse);
 
-                IndicatorValueResponse lpaResponse = new IndicatorValueResponse("LPA", lpaValue);
-                indicators.add(lpaResponse);
+                    BigDecimal roeValue = latestBalanceSheet.getNetProfit().divide(latestBalanceSheet.getEquity(), scale, roundingMode);
+                    IndicatorValueResponse roeResponse = new IndicatorValueResponse("ROE", roeValue);
+                    indicators.add(roeResponse);
 
-                BigDecimal roeValue = optBalanceSheets.get().getNetProfit().divide(optBalanceSheets.get().getEquity(), scale, roundingMode);
-                IndicatorValueResponse roeResponse = new IndicatorValueResponse("ROE", roeValue);
-                indicators.add(roeResponse);
+                    BigDecimal roicValue = latestBalanceSheet.getEbit().divide(latestBalanceSheet.getLiabilities(), scale, roundingMode);
+                    IndicatorValueResponse roicResponse = new IndicatorValueResponse("ROIC", roicValue);
+                    indicators.add(roicResponse);
 
-                BigDecimal roicValue = optBalanceSheets.get().getEbit().divide(optBalanceSheets.get().getLiabilities(), scale, roundingMode);
-                IndicatorValueResponse roicResponse = new IndicatorValueResponse("ROIC", roicValue);
-                indicators.add(roicResponse);
+                    BigDecimal roaValue = latestBalanceSheet.getNetProfit().divide(latestBalanceSheet.getAssets(), scale, roundingMode);
+                    IndicatorValueResponse roaResponse = new IndicatorValueResponse("ROA", roaValue);
+                    indicators.add(roaResponse);
 
-                BigDecimal roaValue = optBalanceSheets.get().getNetProfit().divide(optBalanceSheets.get().getAssets(), scale, roundingMode);
-                IndicatorValueResponse roaResponse = new IndicatorValueResponse("ROA", roaValue);
-                indicators.add(roaResponse);
+                    // Rever lógica de cálculo de CAGR LUCRO e CAGR REC
+                    BigDecimal profitCagrValue = latestBalanceSheet.getNetProfit().multiply(latestBalanceSheet.getNetProfit());
+                    IndicatorValueResponse profitCagrResponse = new IndicatorValueResponse("CAGR LUCRO", profitCagrValue);
+                    indicators.add(profitCagrResponse);
 
-                // Rever lógica de cálculo de CAGR LUCRO e CAGR REC
-                BigDecimal profitCagrValue = optBalanceSheets.get().getNetProfit().multiply(optBalanceSheets.get().getNetProfit());
-                IndicatorValueResponse profitCagrResponse = new IndicatorValueResponse("CAGR LUCRO", profitCagrValue);
-                indicators.add(profitCagrResponse);
+                    BigDecimal cagrRecValue = latestBalanceSheet.getNetRevenue().multiply(latestBalanceSheet.getNetRevenue());
+                    IndicatorValueResponse cagrRecResponse = new IndicatorValueResponse("CAGR REC", cagrRecValue);
+                    indicators.add(cagrRecResponse);
 
-                BigDecimal cagrRecValue = optBalanceSheets.get().getNetRevenue().multiply(optBalanceSheets.get().getNetRevenue());
-                IndicatorValueResponse cagrRecResponse = new IndicatorValueResponse("CAGR REC", cagrRecValue);
-                indicators.add(cagrRecResponse);
+                    BigDecimal divLiqPatLiqValue = latestBalanceSheet.getNetDebt().divide(latestBalanceSheet.getEquity(), scale, roundingMode);
+                    IndicatorValueResponse divLiqPatLiqResponse = new IndicatorValueResponse("DÍV LÍQ/PAT LÍQ", divLiqPatLiqValue);
+                    indicators.add(divLiqPatLiqResponse);
 
-                BigDecimal divLiqPatLiqValue = optBalanceSheets.get().getNetDebt().divide(optBalanceSheets.get().getEquity(), scale, roundingMode);
-                IndicatorValueResponse divLiqPatLiqResponse = new IndicatorValueResponse("DÍV LÍQ/PAT LÍQ", divLiqPatLiqValue);
-                indicators.add(divLiqPatLiqResponse);
+                    BigDecimal divLiqEbit = latestBalanceSheet.getNetDebt().divide(latestBalanceSheet.getEbit(), scale, roundingMode);
+                    IndicatorValueResponse divLiqEbitResponse = new IndicatorValueResponse("DÍV LÍQ/EBIT", divLiqEbit);
+                    indicators.add(divLiqEbitResponse);
 
-                BigDecimal divLiqEbit = optBalanceSheets.get().getNetDebt().divide(optBalanceSheets.get().getEbit(), scale, roundingMode);
-                IndicatorValueResponse divLiqEbitResponse = new IndicatorValueResponse("DÍV LÍQ/EBIT", divLiqEbit);
-                indicators.add(divLiqEbitResponse);
+                    return new IndicatorsResponse(indicators);
 
-                return new IndicatorsResponse(indicators);
+                }
 
             } else {
                 throw new BadRequestNotFoundException(404, "Could not find stocks with ticker " + ticker);
@@ -194,4 +262,128 @@ public class StocksService {
         return null;
     }
 
+    public List<SearchedStocksResponse> searchStocks(String ticker, String companyName, String category, String sector) {
+        List<SearchedStocksResponse> responseList = new ArrayList<SearchedStocksResponse>();
+        if ("small".equalsIgnoreCase(category)) {
+            List<SearchedStocksResponse> stocksList = stockRepository.searchAllSmall();
+            List<SearchedStocksResponse> filteredStocks = stocksList;
+            if (ticker != null){
+                filteredStocks = stocksList.stream()
+                        .filter(stock -> (stock.getTicker().equals(ticker))).collect(Collectors.toList());
+            }
+            if (companyName != null){
+                filteredStocks = stocksList.stream()
+                        .filter(stock -> (stock.getCompanyName().equals(companyName))).collect(Collectors.toList());
+            }
+            if (sector != null){
+                filteredStocks = stocksList.stream()
+                        .filter(stock -> (stock.getSector().equals(sector))).collect(Collectors.toList());
+            }
+            if (!filteredStocks.isEmpty()) {
+                for (SearchedStocksResponse stock : filteredStocks) {
+                    List<Prices> pricesList = priceRepository.findAllByStockIdIdOrderByPriceDateDesc(stock.getId());
+                    BigDecimal lastPrice = BigDecimal.ZERO;
+                    BigDecimal variationOneDay = BigDecimal.ZERO;
+                    if (!pricesList.isEmpty() && pricesList.size() >= 2) {
+                        lastPrice = pricesList.get(0).getValue();
+                        BigDecimal previousPrice = pricesList.get(1).getValue();
+                        variationOneDay = lastPrice.subtract(previousPrice);
+                    }
+                    SearchedStocksResponse stocksCompanies = new SearchedStocksResponse(
+                            stock.getCompanyId(),
+                            stock.getCompanyName(),
+                            stock.getId(),
+                            lastPrice,
+                            stock.getSector(),
+                            stock.getTicker(),
+                            variationOneDay
+                    );
+                    responseList.add(stocksCompanies);
+                }
+            } else {
+                throw new BadRequestNotFoundException(404, "Could not find stocks with ticker " + ticker + " or " + sector +  " or " + companyName + " or " + category);
+            }
+            return responseList;
+        } else if("large".equalsIgnoreCase(category)) {
+            List<SearchedStocksResponse> stocksList = stockRepository.searchAllLarge();
+            List<SearchedStocksResponse> filteredStocks = stocksList;
+            if (ticker != null) {
+                filteredStocks = stocksList.stream()
+                        .filter(stock -> (stock.getTicker().equals(ticker))).collect(Collectors.toList());
+            }
+            if (companyName != null) {
+                filteredStocks = stocksList.stream()
+                        .filter(stock -> (stock.getCompanyName().equals(companyName))).collect(Collectors.toList());
+            }
+            if (sector != null) {
+                filteredStocks = stocksList.stream()
+                        .filter(stock -> (stock.getSector().equals(sector))).collect(Collectors.toList());
+            }
+            if (!filteredStocks.isEmpty()) {
+                for (SearchedStocksResponse stock : filteredStocks) {
+                    List<Prices> pricesList = priceRepository.findAllByStockIdIdOrderByPriceDateDesc(stock.getId());
+                    BigDecimal lastPrice = BigDecimal.ZERO;
+                    BigDecimal variationOneDay = BigDecimal.ZERO;
+                    if (!pricesList.isEmpty() && pricesList.size() >= 2) {
+                        lastPrice = pricesList.get(0).getValue();
+                        BigDecimal previousPrice = pricesList.get(1).getValue();
+                        variationOneDay = lastPrice.subtract(previousPrice);
+                    }
+                    SearchedStocksResponse stocksCompanies = new SearchedStocksResponse(
+                            stock.getCompanyId(),
+                            stock.getCompanyName(),
+                            stock.getId(),
+                            lastPrice,
+                            stock.getSector(),
+                            stock.getTicker(),
+                            variationOneDay
+                    );
+                    responseList.add(stocksCompanies);
+                }
+            } else {
+                throw new BadRequestNotFoundException(404, "Could not find stocks with ticker " + ticker + " or " + sector + " or " + companyName + " or " + category);
+            }
+            return responseList;
+        } else {
+            List<SearchedStocksResponse> stocksList = stockRepository.searchAll();
+            List<SearchedStocksResponse> filteredStocks = stocksList;
+            if (ticker != null) {
+                filteredStocks = stocksList.stream()
+                        .filter(stock -> (stock.getTicker().equals(ticker))).collect(Collectors.toList());
+            }
+            if (companyName != null) {
+                filteredStocks = stocksList.stream()
+                        .filter(stock -> (stock.getCompanyName().equals(companyName))).collect(Collectors.toList());
+            }
+            if (sector != null) {
+                filteredStocks = stocksList.stream()
+                        .filter(stock -> (stock.getSector().equals(sector))).collect(Collectors.toList());
+            }
+            if (!filteredStocks.isEmpty()) {
+                for (SearchedStocksResponse stock : filteredStocks) {
+                    List<Prices> pricesList = priceRepository.findAllByStockIdIdOrderByPriceDateDesc(stock.getId());
+                    BigDecimal lastPrice = BigDecimal.ZERO;
+                    BigDecimal variationOneDay = BigDecimal.ZERO;
+                    if (!pricesList.isEmpty() && pricesList.size() >= 2) {
+                        lastPrice = pricesList.get(0).getValue();
+                        BigDecimal previousPrice = pricesList.get(1).getValue();
+                        variationOneDay = lastPrice.subtract(previousPrice);
+                    }
+                    SearchedStocksResponse stocksCompanies = new SearchedStocksResponse(
+                            stock.getCompanyId(),
+                            stock.getCompanyName(),
+                            stock.getId(),
+                            lastPrice,
+                            stock.getSector(),
+                            stock.getTicker(),
+                            variationOneDay
+                    );
+                    responseList.add(stocksCompanies);
+                }
+            } else {
+                throw new BadRequestNotFoundException(404, "Could not find stocks with ticker " + ticker + " or " + sector + " or " + companyName + " or " + category);
+            }
+            return responseList;
+        }
+    }
 }

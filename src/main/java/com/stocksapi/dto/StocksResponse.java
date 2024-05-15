@@ -19,6 +19,7 @@ public class StocksResponse {
     private BigDecimal variationTwelveMonths;
 
 
+
     public StocksResponse(Stocks stocks, Prices prices, String categorie, BigDecimal variationOneDay, BigDecimal variationOneMonth, BigDecimal variationTwelveMonths, String companyName) {
         this.ticker = stocks.getTicker();
         this.companyName = companyName;

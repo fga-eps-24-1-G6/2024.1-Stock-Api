@@ -1,2 +1,2 @@
 ### Company - Get by id
-GET {{server}}/api/company/company-info/1
+GET {{server}}/api/company/company-info/2
