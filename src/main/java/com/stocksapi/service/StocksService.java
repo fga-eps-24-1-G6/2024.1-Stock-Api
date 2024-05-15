@@ -76,37 +76,32 @@ public class StocksService {
             BigDecimal ceilingPrice = getCeilingPrice(optStocks.get().getId());
             TargetPriceResponse targetPriceResponse = new TargetPriceResponse(Math.sqrt(result.doubleValue()), "PREÇO ALVO" );
             CeilingPriceResponse ceilingPriceResponse = new CeilingPriceResponse(ceilingPrice, "PREÇO TETO");
-            ValuationResponse valuationResponse = new ValuationResponse(targetPriceResponse, ceilingPriceResponse);
-            return valuationResponse;
+            return new ValuationResponse(targetPriceResponse, ceilingPriceResponse);
         }
         throw new BadRequestNotFoundException(404, "Could not find stocks with ticker " + ticker);
 
     }
 
     private BigDecimal getLPA(int companyId) { //metodo auxiliar
-        BigDecimal numberOfPapers;
-        BigDecimal netProfit;
+        BigDecimal numberOfPapers = companiesRepository.findById(companyId).get().getNumberOfPapers();
         BalanceSheet latestBalanceSheet = balanceSheetsRepository.findLatestBalanceSheetByCompanyId(companyId)[0];
-        netProfit = latestBalanceSheet.getNetProfit();
-        numberOfPapers = companiesRepository.findById(companyId).get().getNumberOfPapers();
-        return netProfit.divide(numberOfPapers, 2, BigDecimal.ROUND_HALF_UP);
+        BigDecimal netProfit = latestBalanceSheet.getNetProfit();
+        return netProfit.divide(numberOfPapers, 2, RoundingMode.HALF_UP);
 
     }
 
     private BigDecimal getPL(Integer stockId, Integer companyId) {
             List<Prices> findAllPrices = priceRepository.findAllByStockIdIdOrderByPriceDateDesc(stockId);
             BigDecimal currentPrice = findAllPrices.get(findAllPrices.size() - 1).getValue();
-            return currentPrice.divide(getLPA(companyId), 2,BigDecimal.ROUND_HALF_UP) ;
+            return currentPrice.divide(getLPA(companyId), 2, RoundingMode.HALF_UP) ;
 
     }
 
     private BigDecimal getVPA(int companyId) { //metodo auxiliar
-        BigDecimal numberOfPapers;
-        BigDecimal equity;
+        BigDecimal numberOfPapers = companiesRepository.findById(companyId).get().getNumberOfPapers();
         BalanceSheet latestBalanceSheet = balanceSheetsRepository.findLatestBalanceSheetByCompanyId(companyId)[0];
-        equity= latestBalanceSheet.getEquity();
-        numberOfPapers = companiesRepository.findById(companyId).get().getNumberOfPapers();
-        return equity.divide(numberOfPapers, 2, BigDecimal.ROUND_HALF_UP);
+        BigDecimal equity = latestBalanceSheet.getEquity();
+        return equity.divide(numberOfPapers, 2, RoundingMode.HALF_UP);
 
     }
 
@@ -118,12 +113,10 @@ public class StocksService {
         if (!dividendsList.isEmpty()){
 
             BigDecimal total = dividendsList.stream()
-                    .map(dividends -> dividends.getValue())
+                    .map(Dividends::getValue)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-            BigDecimal ceilingPrice = total.divide(BigDecimal.valueOf(0.06), 2, BigDecimal.ROUND_HALF_UP);
-
-            return ceilingPrice;
+            return total.divide(BigDecimal.valueOf(0.06), 2, RoundingMode.HALF_UP);
 
         } else{
             throw new BadRequestNotFoundException(404, "Could not find dividends with stockId: " + stockId);
@@ -139,7 +132,7 @@ public class StocksService {
         Prices prices = priceRepository.findLatestPriceByStockId(stocks.getId())
                 .orElseThrow(() -> new BadRequestNotFoundException(404, "Could not find prices with ticker: " + ticker));
 
-        BalanceSheet balanceSheet = balanceSheetsRepository.findLatestByCompanyId(stocks.getCompanies().getId())
+        BalanceSheet[] balanceSheet = balanceSheetsRepository.findLatestByCompanyId(stocks.getCompanies().getId())
                 .orElseThrow(() -> new BadRequestNotFoundException(404, "Could not find balances sheet with ticker: " + ticker));
 
         List<BalanceSheet> findAllBalances = balanceSheetsRepository.findAllByCompaniesId(stocks.getCompanies().getId());
@@ -150,14 +143,14 @@ public class StocksService {
         RoundingMode roundingMode = RoundingMode.HALF_UP;
 
         BigDecimal value = prices.getValue();
-        BigDecimal netProfit = balanceSheet.getNetProfit();
-        BigDecimal equity = balanceSheet.getEquity();
-        BigDecimal netRevenue = balanceSheet.getNetRevenue();
-        BigDecimal ebit = balanceSheet.getEbit();
-        BigDecimal ebitda = balanceSheet.getEbitda();
-        BigDecimal assets = balanceSheet.getAssets();
-        BigDecimal liabilities = balanceSheet.getLiabilities();
-        BigDecimal netDebt = balanceSheet.getNetDebt();
+        BigDecimal netProfit = balanceSheet[0].getNetProfit();
+        BigDecimal equity = balanceSheet[0].getEquity();
+        BigDecimal netRevenue = balanceSheet[0].getNetRevenue();
+        BigDecimal ebit = balanceSheet[0].getEbit();
+        BigDecimal ebitda = balanceSheet[0].getEbitda();
+        BigDecimal assets = balanceSheet[0].getAssets();
+        BigDecimal liabilities = balanceSheet[0].getLiabilities();
+        BigDecimal netDebt = balanceSheet[0].getNetDebt();
         BigDecimal numberOfPapers = stocks.getCompanies().getNumberOfPapers();
 
         BigDecimal lpaValue = netProfit.divide(numberOfPapers, scale, roundingMode);
@@ -175,7 +168,7 @@ public class StocksService {
         BigDecimal divYieldValue = BigDecimal.ZERO;
         BigDecimal payoutValue = BigDecimal.ZERO;
         List<Dividends> dividends = dividendsRepository.findByStocksId(stocks.getId());
-        if (!dividends.isEmpty()) {
+        if (dividends.isEmpty()) {
             BigDecimal dividendValue = dividends.get(0).getValue();
             divYieldValue = dividendValue.divide(value, scale, roundingMode);
             payoutValue = dividendValue.divide(netProfit, scale, roundingMode);
@@ -186,7 +179,7 @@ public class StocksService {
         BigDecimal netMarginValue = netProfit.divide(netRevenue, scale, roundingMode);
         indicators.add(new IndicatorValueResponse("MARGEM LÍQ", netMarginValue));
 
-        BigDecimal grossMarginValue = balanceSheet.getGrossProfit().divide(netRevenue, scale, roundingMode);
+        BigDecimal grossMarginValue = balanceSheet[0].getGrossProfit().divide(netRevenue, scale, roundingMode);
         indicators.add(new IndicatorValueResponse("MARGEM BRUTA", grossMarginValue));
 
         BigDecimal ebitMarginValue = ebit.divide(netRevenue, scale, roundingMode);

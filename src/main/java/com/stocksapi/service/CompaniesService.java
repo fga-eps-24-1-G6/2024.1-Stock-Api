@@ -36,9 +36,9 @@ public class CompaniesService {
 
         BigDecimal marketValue = latestPrice.getValue().multiply(companies.getNumberOfPapers());
 
-        BalanceSheet balanceSheet = balanceSheetsRepository.findLatestByCompanyId(id)
+        BalanceSheet[] balanceSheet = balanceSheetsRepository.findLatestByCompanyId(id)
                 .orElseThrow(() -> new BadRequestNotFoundException(404, "Could not find balance sheet for company with id: " + id));
 
-        return new CompaniesResponse(companies, marketValue, balanceSheet.getEquity());
+        return new CompaniesResponse(companies, marketValue, balanceSheet[0].getEquity());
     }
 }

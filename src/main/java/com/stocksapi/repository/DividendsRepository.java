@@ -10,10 +10,8 @@ import java.util.Optional;
 
 public interface DividendsRepository extends JpaRepository<Dividends, Integer> {
   
-    // @Query("SELECT d FROM Dividends d WHERE d.stocks.id = :stockId")
-    // List<Dividends> findByStocksId(Integer stockId);
-  
-    Optional<Dividends> findByStocksId(Integer id);
+     @Query("SELECT d FROM Dividends d WHERE d.stocks.id = :stockId")
+     List<Dividends> findByStocksId(Integer stockId);
     
     @Query("SELECT d FROM Dividends d WHERE d.stocks.id = :stockId AND d.paymentDate BETWEEN :endDate AND :startDate")
     List<Dividends> findLastTwelveMonthsDividendsByStockId(Integer stockId, LocalDate startDate, LocalDate endDate);
