@@ -12,4 +12,6 @@ public interface PriceRepository extends JpaRepository<Prices, Integer> {
     Optional<Prices> findLatestPriceByStockId(Integer id);
 
     List<Prices> findAllByStockIdIdOrderByPriceDateDesc(Integer id);
+
+    List<Prices> findAllByStockIdIdOrderByPriceDate(Integer id);
 }
