@@ -52,6 +52,14 @@ public class StocksService {
         }
         
         List<Prices> findAllPrices = priceRepository.findAllByStockIdIdOrderByPriceDate(stocks.getId());
+        List<PricesResponse> pricesResponseList = findAllPrices.stream()
+                .map(objs -> {
+                    PricesResponse response = new PricesResponse();
+                    response.setValue(objs.getValue());
+                    response.setPriceDate(objs.getPriceDate());
+                    return response;
+                })
+                .collect(Collectors.toList());
 
         BigDecimal currentPrice = findAllPrices.get(findAllPrices.size() - 1).getValue();
         BigDecimal priceOneDayAgo = getPriceXDaysAgo(findAllPrices, 1);
@@ -64,7 +72,14 @@ public class StocksService {
         BigDecimal priceTwelveMonthsAgo = getPriceXMonthsAgo(findAllPrices, 12);
         BigDecimal variationTwelveMonths = calculateVariation(currentPrice, priceTwelveMonthsAgo);
 
-        return new StocksResponse(stocks, prices, categorie, variationOneDay, variationOneMonth, variationTwelveMonths, stocks.getCompanies().getName());
+        return new StocksResponse(stocks, prices, categorie, variationOneDay, variationOneMonth, variationTwelveMonths, stocks.getCompanies().getName(), pricesResponseList);
+    }
+
+    public static PricesResponse toPricesResponse(Prices prices) {
+        PricesResponse response = new PricesResponse();
+        response.setValue(prices.getValue());
+        response.setPriceDate(prices.getPriceDate());
+        return response;
     }
 
     public ValuationResponse getValuationByTicker(String ticker) {

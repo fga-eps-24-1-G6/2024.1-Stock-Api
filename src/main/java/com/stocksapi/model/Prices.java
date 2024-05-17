@@ -1,18 +1,18 @@
 package com.stocksapi.model;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+import javax.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+@Getter
 @Table(name = "prices", schema = "public")
 @Entity
+@AllArgsConstructor
+@NoArgsConstructor
 public class Prices {
 
     @ManyToOne
@@ -28,30 +28,4 @@ public class Prices {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
-
-    public Prices() {
-    }
-
-    public Prices(Integer id, LocalDate priceDate, Stocks stockId, BigDecimal value) {
-        this.id = id;
-        this.priceDate = priceDate;
-        this.stockId = stockId;
-        this.value = value;
-    }
-
-    public Integer getId() {
-        return id;
-    }
-
-    public LocalDate getPriceDate() {
-        return priceDate;
-    }
-
-    public Stocks getStockId() {
-        return stockId;
-    }
-
-    public BigDecimal getValue() {
-        return value;
-    }
 }
