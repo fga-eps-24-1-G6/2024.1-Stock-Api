@@ -30,49 +30,6 @@ public class DividendsService {
         this.priceRepository = priceRepository;
     }
 
-
-//    public DividendsWithDividendYieldResponse getDividendsByTickerOld(String ticker) {
-//        Optional<Stocks> optStocks = stockRepository.findByTicker(ticker);
-//        if (optStocks.isPresent()) {
-//            Optional<Dividends> optDividends = dividendsRepository.findByStocksId(optStocks.get().getId());
-//            if (optDividends.isPresent()) {
-//                Optional<Prices> optPrices = priceRepository.findLatestPriceByStockId(optStocks.get().getId());
-//                List<DividendsResponse> dividendsResponseList = new ArrayList<DividendsResponse>();
-//                List<PaymentMonthResponse> paymentMonthResponseList = new ArrayList<PaymentMonthResponse>();
-//                List<YearlyPaymentResponse> yearlyPaymentResponseList = new ArrayList<YearlyPaymentResponse>();
-//
-//                // Ver logica de calculo com Batista quando tivermos mais registros no banco
-//                // Rever tudo na verdade :melting_face:
-//                int scale = 10;
-//                RoundingMode roundingMode = RoundingMode.HALF_UP;
-//                BigDecimal value = optPrices.get().getValue();
-//                BigDecimal divYieldValue = optDividends.get().getValue().divide(value, scale, roundingMode);
-//
-//                DividendYieldResponse dividendYieldResponse = new DividendYieldResponse(divYieldValue, divYieldValue, divYieldValue);
-//
-//                String monthName = getMonthName(optDividends.get().getPaymentDate());
-//                PaymentMonthResponse paymentMonthResponse = new PaymentMonthResponse(optDividends.get().getValue() ,monthName);
-//                paymentMonthResponseList.add(paymentMonthResponse);
-//
-//                YearlyPaymentResponse yearlyPaymentResponse = new YearlyPaymentResponse(optDividends.get().getValue(), optDividends.get().getPaymentDate().getYear());
-//                yearlyPaymentResponseList.add(yearlyPaymentResponse);
-//
-//                DividendsResponse dividendsResponse = new DividendsResponse(optDividends.get().getOwnershipDate(), optDividends.get().getValue(), optDividends.get().getPaymentDate(), optDividends.get().getType());
-//                dividendsResponseList.add(dividendsResponse);
-//
-//                DividendsWithDividendYieldResponse dividendsWithDividendYieldResponse = new DividendsWithDividendYieldResponse(dividendsResponseList, dividendYieldResponse, paymentMonthResponseList, yearlyPaymentResponseList);
-//
-//               return dividendsWithDividendYieldResponse;
-//            }
-//            else {
-//                throw new BadRequestNotFoundException(404, "Could not find dividends from stocks with ticker: " + ticker);
-//            }
-//        } else {
-//            throw new BadRequestNotFoundException(404, "Could not find dividends from stocks with ticker: " + ticker);
-//        }
-//
-//    }
-
     public DividendsWithDividendYieldResponse getDividendsByTicker(String ticker) {
         Stocks stocks = stockRepository.findByTicker(ticker)
                 .orElseThrow(() -> new BadRequestNotFoundException(404, "Could not find stocks with ticker: " + ticker));
