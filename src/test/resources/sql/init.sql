@@ -96,7 +96,7 @@ INSERT INTO public.stocks (id, external_id, ticker, company_id, free_float, tag_
 VALUES (4, null, 'petr4', 1, 63.33, 100, 1617781000);
 
 INSERT INTO public.dividends (stock_id, type, value, ownership_date, payment_date, id)
-VALUES (4, 'Dividendos', 0.54947422, '2024-04-25', '2024-05-20', 1);
+VALUES (4, 'Dividendos', 0.54947422, '2024-04-25', CURRENT_DATE, 1);
 
 INSERT INTO public.prices (stock_id, value, price_date, id)
 VALUES (4, 34.87, '2024-04-23', 2);
@@ -128,3 +128,29 @@ INSERT INTO public.balance_sheets (company_id, year, quarter, net_revenue, costs
                                    ebit, taxes, gross_debt, net_debt, equity, cash, assets, liabilities, id)
 VALUES (1, 2023, 4, 511994000000, -242061000000, 269933000000, 125166000000, 255546000000, 189342000000, -52315000000,
         303062000000, 227799000000, 382340000000, 75263000000, 1050888000000, 1050888000000, 2);
+
+INSERT INTO public.balance_sheets (company_id, year, quarter, net_revenue, costs, gross_profit, net_profit, ebitda,
+                                   ebit, taxes, gross_debt, net_debt, equity, cash, assets, liabilities, id)
+VALUES (1, 2018, 4, 511994000000, -242061000000, 269933000000, 125166000000, 255546000000, 189342000000, -52315000000,
+        303062000000, 227799000000, 382340000000, 75263000000, 1050888000000, 1050888000000, 2);
+
+INSERT INTO public.balance_sheets (company_id, year, quarter, net_revenue, costs, gross_profit, net_profit, ebitda,
+                                   ebit, taxes, gross_debt, net_debt, equity, cash, assets, liabilities, id)
+VALUES (1, 2017, 4, 511994000000, -242061000000, 269933000000, 125166000000, 255546000000, 189342000000, -52315000000,
+        303062000000, 227799000000, 382340000000, 75263000000, 1050888000000, 1050888000000, 2);
+
+INSERT INTO public.balance_sheets (company_id, year, quarter, net_revenue, costs, gross_profit, net_profit, ebitda,
+                                   ebit, taxes, gross_debt, net_debt, equity, cash, assets, liabilities, id)
+VALUES (1, 2019, 4, 511994000000, -242061000000, 269933000000, 125166000000, 255546000000, 189342000000, -52315000000,
+        303062000000, 227799000000, 382340000000, 75263000000, 1050888000000, 1050888000000, 2);
+
+INSERT INTO public.balance_sheets (company_id, year, quarter, net_revenue, costs, gross_profit, net_profit, ebitda,
+                                   ebit, taxes, gross_debt, net_debt, equity, cash, assets, liabilities, id)
+VALUES (1, 2020, 4, 511994000000, -242061000000, 269933000000, 125166000000, 255546000000, 189342000000, -52315000000,
+        303062000000, 227799000000, 382340000000, 75263000000, 1050888000000, 1050888000000, 2);
+
+INSERT INTO public.balance_sheets (company_id, year, quarter, net_revenue, costs, gross_profit, net_profit, ebitda,
+                                   ebit, taxes, gross_debt, net_debt, equity, cash, assets, liabilities, id)
+VALUES (1, 2021, 4, 511994000000, -242061000000, 269933000000, 125166000000, 255546000000, 189342000000, -52315000000,
+        303062000000, 227799000000, 382340000000, 75263000000, 1050888000000, 1050888000000, 2);
+
