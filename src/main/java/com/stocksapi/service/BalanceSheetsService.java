@@ -9,10 +9,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 public class BalanceSheetsService {
@@ -30,29 +27,59 @@ public class BalanceSheetsService {
         }
 
         Map<String, List<YearlyValuesResponse>> responseMap = new HashMap<>();
+        Map<Integer, List<BigDecimal>> grossMarginPerYear = new HashMap<>();
+        Map<Integer, List<BigDecimal>> netMarginPerYear = new HashMap<>();
+
+        Map<Integer, BigDecimal> netRevenuePerYear = new HashMap<>();
+        Map<Integer, BigDecimal> costsPerYear = new HashMap<>();
+        Map<Integer, BigDecimal> grossProfitPerYear = new HashMap<>();
+        Map<Integer, BigDecimal> netProfitPerYear = new HashMap<>();
+        Map<Integer, BigDecimal> ebitdaPerYear = new HashMap<>();
+        Map<Integer, BigDecimal> ebitPerYear = new HashMap<>();
+        Map<Integer, BigDecimal> taxesPerYear = new HashMap<>();
+        Map<Integer, BigDecimal> grossDebtPerYear = new HashMap<>();
+        Map<Integer, BigDecimal> netDebtPerYear = new HashMap<>();
 
         for (BalanceSheet balanceSheet : allByCompaniesId) {
-            addToResponseMap(responseMap, "Receita Líquida", balanceSheet.getNetRevenue(), balanceSheet.getYear());
-            addToResponseMap(responseMap, "Custos", balanceSheet.getCosts(), balanceSheet.getYear());
-            addToResponseMap(responseMap, "Lucro Bruto", balanceSheet.getGrossProfit(), balanceSheet.getYear());
-            addToResponseMap(responseMap, "Lucro Líquido", balanceSheet.getNetProfit(), balanceSheet.getYear());
-            addToResponseMap(responseMap, "EBITDA", balanceSheet.getEbitda(), balanceSheet.getYear());
-            addToResponseMap(responseMap, "EBIT", balanceSheet.getEbit(), balanceSheet.getYear());
-            addToResponseMap(responseMap, "Impostos", balanceSheet.getTaxes(), balanceSheet.getYear());
-            addToResponseMap(responseMap, "Dívida Bruta", balanceSheet.getGrossDebt(), balanceSheet.getYear());
-            addToResponseMap(responseMap, "Dívida Líquida", balanceSheet.getNetDebt(), balanceSheet.getYear());
+            Integer year = balanceSheet.getYear();
+            int quarter = balanceSheet.getQuarter();
+
+            accumulateValue(netRevenuePerYear, year, balanceSheet.getNetRevenue());
+            accumulateValue(costsPerYear, year, balanceSheet.getCosts());
+            accumulateValue(grossProfitPerYear, year, balanceSheet.getGrossProfit());
+            accumulateValue(netProfitPerYear, year, balanceSheet.getNetProfit());
+            accumulateValue(ebitdaPerYear, year, balanceSheet.getEbitda());
+            accumulateValue(ebitPerYear, year, balanceSheet.getEbit());
+            accumulateValue(taxesPerYear, year, balanceSheet.getTaxes());
+            accumulateValue(grossDebtPerYear, year, balanceSheet.getGrossDebt());
+            accumulateValue(netDebtPerYear, year, balanceSheet.getNetDebt());
 
             int scale = 10;
             BigDecimal grossMargin = calculateMargin(balanceSheet.getGrossProfit(), balanceSheet.getNetRevenue(), scale);
-            addToResponseMap(responseMap, "Margem Bruta", grossMargin, balanceSheet.getYear());
+            addToMarginMap(grossMarginPerYear, year, grossMargin);
 
             BigDecimal netMargin = calculateMargin(balanceSheet.getNetProfit(), balanceSheet.getNetRevenue(), scale);
-            addToResponseMap(responseMap, "Margem Líquida", netMargin, balanceSheet.getYear());
+            addToMarginMap(netMarginPerYear, year, netMargin);
 
-            addToResponseMap(responseMap, "Patrimônio Líquido", balanceSheet.getEquity(), balanceSheet.getYear());
-            addToResponseMap(responseMap, "Ativos", balanceSheet.getAssets(), balanceSheet.getYear());
-            addToResponseMap(responseMap, "Passivos", balanceSheet.getLiabilities(), balanceSheet.getYear());
+            if (quarter == 4) {
+                addToResponseMap(responseMap, "Patrimônio Líquido", balanceSheet.getEquity(), year);
+                addToResponseMap(responseMap, "Ativos", balanceSheet.getAssets(), year);
+                addToResponseMap(responseMap, "Passivos", balanceSheet.getLiabilities(), year);
+            }
         }
+
+        calculateAndAddAverageMargin(responseMap, grossMarginPerYear, "Margem Bruta");
+        calculateAndAddAverageMargin(responseMap, netMarginPerYear, "Margem Líquida");
+
+        addAnnualValuesToResponseMap(responseMap, netRevenuePerYear, "Receita Líquida");
+        addAnnualValuesToResponseMap(responseMap, costsPerYear, "Custos");
+        addAnnualValuesToResponseMap(responseMap, grossProfitPerYear, "Lucro Bruto");
+        addAnnualValuesToResponseMap(responseMap, netProfitPerYear, "Lucro Líquido");
+        addAnnualValuesToResponseMap(responseMap, ebitdaPerYear, "EBITDA");
+        addAnnualValuesToResponseMap(responseMap, ebitPerYear, "EBIT");
+        addAnnualValuesToResponseMap(responseMap, taxesPerYear, "Impostos");
+        addAnnualValuesToResponseMap(responseMap, grossDebtPerYear, "Dívida Bruta");
+        addAnnualValuesToResponseMap(responseMap, netDebtPerYear, "Dívida Líquida");
 
         List<BalanceSheetsResponse> balanceSheetsResponseList = new ArrayList<>();
         responseMap.forEach((key, value) -> balanceSheetsResponseList.add(new BalanceSheetsResponse(key, value)));
@@ -60,13 +87,50 @@ public class BalanceSheetsService {
         return balanceSheetsResponseList;
     }
 
-    private void addToResponseMap(Map<String, List<YearlyValuesResponse>> responseMap, String key, BigDecimal value, int year) {
+    private static void accumulateValue(Map<Integer, BigDecimal> map, Integer year, BigDecimal value) {
+        value = (value != null) ? value : BigDecimal.ZERO;
+        map.put(year, map.getOrDefault(year, BigDecimal.ZERO).add(value));
+    }
+
+    private static void addToResponseMap(Map<String, List<YearlyValuesResponse>> responseMap, String key, BigDecimal value, int year) {
         List<YearlyValuesResponse> list = responseMap.getOrDefault(key, new ArrayList<>());
         list.add(new YearlyValuesResponse(value, year));
         responseMap.put(key, list);
     }
 
     private BigDecimal calculateMargin(BigDecimal numerator, BigDecimal denominator, int scale) {
-        return numerator.divide(denominator, scale, RoundingMode.HALF_UP);
+        if (denominator == null || denominator.equals(BigDecimal.ZERO)) {
+            return BigDecimal.ZERO;
+        }
+        return (numerator != null ? numerator : BigDecimal.ZERO).divide(denominator, scale, RoundingMode.HALF_UP);
+    }
+
+    private static void addToMarginMap(Map<Integer, List<BigDecimal>> marginMap, int year, BigDecimal margin) {
+        List<BigDecimal> margins = marginMap.getOrDefault(year, new ArrayList<>());
+        margins.add(margin);
+        marginMap.put(year, margins);
+    }
+
+    private static void calculateAndAddAverageMargin(Map<String, List<YearlyValuesResponse>> responseMap, Map<Integer, List<BigDecimal>> marginPerYear, String itemName) {
+        for (Map.Entry<Integer, List<BigDecimal>> entry : marginPerYear.entrySet()) {
+            Integer year = entry.getKey();
+            List<BigDecimal> margins = entry.getValue();
+            BigDecimal sum = margins.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+            BigDecimal average = sum.divide(new BigDecimal(margins.size()), RoundingMode.HALF_UP);
+            List<YearlyValuesResponse> list = responseMap.getOrDefault(itemName, new ArrayList<>());
+            list.removeIf(y -> y.getYear() == year);  // Remove existing entry for the same year if it exists
+            list.add(new YearlyValuesResponse(average, year));
+            responseMap.put(itemName, list);
+        }
+    }
+
+    private static void addAnnualValuesToResponseMap(Map<String, List<YearlyValuesResponse>> responseMap, Map<Integer, BigDecimal> annualValues, String itemName) {
+        for (Map.Entry<Integer, BigDecimal> entry : annualValues.entrySet()) {
+            Integer year = entry.getKey();
+            BigDecimal value = entry.getValue();
+            List<YearlyValuesResponse> list = responseMap.getOrDefault(itemName, new ArrayList<>());
+            list.add(new YearlyValuesResponse(value, year));
+            responseMap.put(itemName, list);
+        }
     }
 }

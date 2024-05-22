@@ -15,6 +15,6 @@ import java.util.Map;
 public class DividendsWithDividendYieldResponse {
     private List<Dividends> dividends;
     private Map<Integer, BigDecimal> yearlyPayments;
-    private Map<String, Double> paymentMonths;
+    private Map<String, String> paymentMonths;
     private Map<String, BigDecimal> dividendYield;
 }

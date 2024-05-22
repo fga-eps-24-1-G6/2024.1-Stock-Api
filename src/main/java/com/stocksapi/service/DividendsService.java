@@ -61,10 +61,10 @@ public class DividendsService {
         int totalDividends = dividends.size();
 
         // Calcular a porcentagem de dividendos pagos em cada mês
-        Map<String, Double> paymentMonths = new HashMap<>();
+        Map<String, String> paymentMonths = new HashMap<>();
         dividendCountByMonth.forEach((month, count) -> {
             double percentage = ((double) count / totalDividends) * 100;
-            paymentMonths.put(month, percentage);
+            paymentMonths.put(month, String.valueOf(percentage) + "%");
         });
 
 
