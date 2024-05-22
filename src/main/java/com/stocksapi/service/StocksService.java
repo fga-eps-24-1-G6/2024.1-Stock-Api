@@ -72,7 +72,7 @@ public class StocksService {
         BigDecimal priceTwelveMonthsAgo = getPriceXMonthsAgo(findAllPrices, 12);
         BigDecimal variationTwelveMonths = calculateVariation(currentPrice, priceTwelveMonthsAgo);
 
-        return new StocksResponse(stocks, prices, categorie, variationOneDay, variationOneMonth, variationTwelveMonths, stocks.getCompanies().getName(), pricesResponseList);
+        return new StocksResponse(stocks, prices, categorie, variationOneDay, variationOneMonth, variationTwelveMonths, stocks.getCompanies().getName(), stocks.getCompanies().getId(), pricesResponseList);
     }
 
     public static PricesResponse toPricesResponse(Prices prices) {
@@ -157,70 +157,70 @@ public class StocksService {
         int scale = 10;
         RoundingMode roundingMode = RoundingMode.HALF_UP;
 
-        BigDecimal value = prices.getValue();
-        BigDecimal netProfit = balanceSheet[0].getNetProfit();
-        BigDecimal equity = balanceSheet[0].getEquity();
-        BigDecimal netRevenue = balanceSheet[0].getNetRevenue();
-        BigDecimal ebit = balanceSheet[0].getEbit();
-        BigDecimal ebitda = balanceSheet[0].getEbitda();
-        BigDecimal assets = balanceSheet[0].getAssets();
-        BigDecimal liabilities = balanceSheet[0].getLiabilities();
-        BigDecimal netDebt = balanceSheet[0].getNetDebt();
-        BigDecimal numberOfPapers = stocks.getCompanies().getNumberOfPapers();
+        BigDecimal value = Optional.ofNullable(prices.getValue()).orElse(BigDecimal.ZERO);
+        BigDecimal netProfit = Optional.ofNullable(balanceSheet[0].getNetProfit()).orElse(BigDecimal.ZERO);
+        BigDecimal equity = Optional.ofNullable(balanceSheet[0].getEquity()).orElse(BigDecimal.ZERO);
+        BigDecimal netRevenue = Optional.ofNullable(balanceSheet[0].getNetRevenue()).orElse(BigDecimal.ZERO);
+        BigDecimal ebit = Optional.ofNullable(balanceSheet[0].getEbit()).orElse(BigDecimal.ZERO);
+        BigDecimal ebitda = Optional.ofNullable(balanceSheet[0].getEbitda()).orElse(BigDecimal.ZERO);
+        BigDecimal assets = Optional.ofNullable(balanceSheet[0].getAssets()).orElse(BigDecimal.ZERO);
+        BigDecimal liabilities = Optional.ofNullable(balanceSheet[0].getLiabilities()).orElse(BigDecimal.ZERO);
+        BigDecimal netDebt = Optional.ofNullable(balanceSheet[0].getNetDebt()).orElse(BigDecimal.ZERO);
+        BigDecimal numberOfPapers = Optional.ofNullable(stocks.getCompanies().getNumberOfPapers()).orElse(BigDecimal.ZERO);
 
-        BigDecimal lpaValue = netProfit.divide(numberOfPapers, scale, roundingMode);
+        BigDecimal lpaValue = (numberOfPapers.compareTo(BigDecimal.ZERO) != 0) ? netProfit.divide(numberOfPapers, scale, roundingMode) : BigDecimal.ZERO;
         indicators.add(new IndicatorValueResponse("LPA", lpaValue));
 
-        BigDecimal plValue = value.divide(lpaValue, scale, roundingMode);
+        BigDecimal plValue = (lpaValue.compareTo(BigDecimal.ZERO) != 0) ? value.divide(lpaValue, scale, roundingMode) : BigDecimal.ZERO;
         indicators.add(new IndicatorValueResponse("P/L", plValue));
 
-        BigDecimal vpaValue = equity.divide(numberOfPapers, scale, roundingMode);
+        BigDecimal vpaValue = (numberOfPapers.compareTo(BigDecimal.ZERO) != 0) ? equity.divide(numberOfPapers, scale, roundingMode) : BigDecimal.ZERO;
         indicators.add(new IndicatorValueResponse("VPA", vpaValue));
 
-        BigDecimal pvpValue = value.divide(vpaValue, scale, roundingMode);
+        BigDecimal pvpValue = (vpaValue.compareTo(BigDecimal.ZERO) != 0) ? value.divide(vpaValue, scale, roundingMode) : BigDecimal.ZERO;
         indicators.add(new IndicatorValueResponse("P/VP", pvpValue));
 
         BigDecimal divYieldValue = BigDecimal.ZERO;
         BigDecimal payoutValue = BigDecimal.ZERO;
         List<Dividends> dividends = dividendsRepository.findByStocksId(stocks.getId());
-        if (dividends.isEmpty()) {
-            BigDecimal dividendValue = dividends.get(0).getValue();
-            divYieldValue = dividendValue.divide(value, scale, roundingMode);
-            payoutValue = dividendValue.divide(netProfit, scale, roundingMode);
+        if (!dividends.isEmpty()) {
+            BigDecimal dividendValue = Optional.ofNullable(dividends.get(0).getValue()).orElse(BigDecimal.ZERO);
+            divYieldValue = (value.compareTo(BigDecimal.ZERO) != 0) ? dividendValue.divide(value, scale, roundingMode) : BigDecimal.ZERO;
+            payoutValue = (netProfit.compareTo(BigDecimal.ZERO) != 0) ? dividendValue.divide(netProfit, scale, roundingMode) : BigDecimal.ZERO;
         }
         indicators.add(new IndicatorValueResponse("DIV YIELD", divYieldValue));
         indicators.add(new IndicatorValueResponse("PAYOUT", payoutValue));
 
-        BigDecimal netMarginValue = netProfit.divide(netRevenue, scale, roundingMode);
+        BigDecimal netMarginValue = (netRevenue.compareTo(BigDecimal.ZERO) != 0) ? netProfit.divide(netRevenue, scale, roundingMode) : BigDecimal.ZERO;
         indicators.add(new IndicatorValueResponse("MARGEM LÍQ", netMarginValue));
 
-        BigDecimal grossMarginValue = balanceSheet[0].getGrossProfit().divide(netRevenue, scale, roundingMode);
+        BigDecimal grossMarginValue = (netRevenue.compareTo(BigDecimal.ZERO) != 0) ? Optional.ofNullable(balanceSheet[0].getGrossProfit()).orElse(BigDecimal.ZERO).divide(netRevenue, scale, roundingMode) : BigDecimal.ZERO;
         indicators.add(new IndicatorValueResponse("MARGEM BRUTA", grossMarginValue));
 
-        BigDecimal ebitMarginValue = ebit.divide(netRevenue, scale, roundingMode);
+        BigDecimal ebitMarginValue = (netRevenue.compareTo(BigDecimal.ZERO) != 0) ? ebit.divide(netRevenue, scale, roundingMode) : BigDecimal.ZERO;
         indicators.add(new IndicatorValueResponse("MARGEM EBIT", ebitMarginValue));
 
         BigDecimal marketValue = value.multiply(numberOfPapers);
 
-        BigDecimal evEbitValue = marketValue.divide(ebit, scale, roundingMode);
+        BigDecimal evEbitValue = (ebit.compareTo(BigDecimal.ZERO) != 0) ? marketValue.divide(ebit, scale, roundingMode) : BigDecimal.ZERO;
         indicators.add(new IndicatorValueResponse("EV/EBIT", evEbitValue));
 
-        BigDecimal evEbitdaValue = marketValue.divide(ebitda, scale, roundingMode);
+        BigDecimal evEbitdaValue = (ebitda.compareTo(BigDecimal.ZERO) != 0) ? marketValue.divide(ebitda, scale, roundingMode) : BigDecimal.ZERO;
         indicators.add(new IndicatorValueResponse("EV/EBITDA", evEbitdaValue));
 
-        BigDecimal roeValue = netProfit.divide(equity, scale, roundingMode);
+        BigDecimal roeValue = (equity.compareTo(BigDecimal.ZERO) != 0) ? netProfit.divide(equity, scale, roundingMode) : BigDecimal.ZERO;
         indicators.add(new IndicatorValueResponse("ROE", roeValue));
 
-        BigDecimal roicValue = ebit.divide(liabilities, scale, roundingMode);
+        BigDecimal roicValue = (liabilities.compareTo(BigDecimal.ZERO) != 0) ? ebit.divide(liabilities, scale, roundingMode) : BigDecimal.ZERO;
         indicators.add(new IndicatorValueResponse("ROIC", roicValue));
 
-        BigDecimal roaValue = netProfit.divide(assets, scale, roundingMode);
+        BigDecimal roaValue = (assets.compareTo(BigDecimal.ZERO) != 0) ? netProfit.divide(assets, scale, roundingMode) : BigDecimal.ZERO;
         indicators.add(new IndicatorValueResponse("ROA", roaValue));
 
-        BigDecimal divLiqPatLiqValue = netDebt.divide(equity, scale, roundingMode);
+        BigDecimal divLiqPatLiqValue = (equity.compareTo(BigDecimal.ZERO) != 0) ? netDebt.divide(equity, scale, roundingMode) : BigDecimal.ZERO;
         indicators.add(new IndicatorValueResponse("DÍV LÍQ/PAT LÍQ", divLiqPatLiqValue));
 
-        BigDecimal divLiqEbit = netDebt.divide(ebit, scale, roundingMode);
+        BigDecimal divLiqEbit = (ebit.compareTo(BigDecimal.ZERO) != 0) ? netDebt.divide(ebit, scale, roundingMode) : BigDecimal.ZERO;
         indicators.add(new IndicatorValueResponse("DÍV LÍQ/EBIT", divLiqEbit));
 
         BigDecimal profitCagrValue = calculateProfitCAGR(findAllBalances);
@@ -231,6 +231,7 @@ public class StocksService {
 
         return new IndicatorsResponse(indicators);
     }
+
 
     private static BigDecimal calculateVariation(BigDecimal current, BigDecimal previous) {
         return current.subtract(previous)

@@ -57,16 +57,31 @@ public class DividendsService {
             dividendCountByMonth.put(month, dividendCountByMonth.getOrDefault(month, 0) + 1);
         }
 
+        // Mapa de tradução de meses de inglês para português
+        Map<String, String> monthTranslation = new HashMap<>();
+        monthTranslation.put("JANUARY", "Janeiro");
+        monthTranslation.put("FEBRUARY", "Fevereiro");
+        monthTranslation.put("MARCH", "Março");
+        monthTranslation.put("APRIL", "Abril");
+        monthTranslation.put("MAY", "Maio");
+        monthTranslation.put("JUNE", "Junho");
+        monthTranslation.put("JULY", "Julho");
+        monthTranslation.put("AUGUST", "Agosto");
+        monthTranslation.put("SEPTEMBER", "Setembro");
+        monthTranslation.put("OCTOBER", "Outubro");
+        monthTranslation.put("NOVEMBER", "Novembro");
+        monthTranslation.put("DECEMBER", "Dezembro");
+
         // Total de dividendos
         int totalDividends = dividends.size();
 
-        // Calcular a porcentagem de dividendos pagos em cada mês
-        Map<String, String> paymentMonths = new HashMap<>();
+        // Calcular a porcentagem de dividendos pagos em cada mês com tradução dos meses
+        Map<String, Double> paymentMonths = new HashMap<>();
         dividendCountByMonth.forEach((month, count) -> {
+            String translatedMonth = monthTranslation.getOrDefault(month, month); // Traduz o mês, se possível
             double percentage = ((double) count / totalDividends) * 100;
-            paymentMonths.put(month, String.valueOf(percentage) + "%");
+            paymentMonths.put(translatedMonth, percentage);
         });
-
 
         Prices latestPrice = priceRepository.findLatestPriceByStockId(stocks.getId())
                 .orElseThrow(() -> new BadRequestNotFoundException(404, "Could not find latest price for stocks with ticker: " + ticker));
@@ -82,11 +97,6 @@ public class DividendsService {
         dividendYield.put("dividendYieldLastTenYears", dividendYieldLastTenYears);
 
         return new DividendsWithDividendYieldResponse(dividends, totalDividendsByYear, paymentMonths, dividendYield);
-    }
-
-    public static String getMonthName(LocalDate date) {
-        String monthName = date.format(DateTimeFormatter.ofPattern("MMMM", Locale.ENGLISH));
-        return monthName;
     }
 
     public static BigDecimal calculateDividendYieldPerPeriod(Map<Integer, BigDecimal> totalDividendsByYear, Integer count, BigDecimal latestPrice) {
