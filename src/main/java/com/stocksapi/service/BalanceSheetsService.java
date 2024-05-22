@@ -117,9 +117,10 @@ public class BalanceSheetsService {
             List<BigDecimal> margins = entry.getValue();
             BigDecimal sum = margins.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
             BigDecimal average = sum.divide(new BigDecimal(margins.size()), RoundingMode.HALF_UP);
+            BigDecimal hundred = new BigDecimal(100);
             List<YearlyValuesResponse> list = responseMap.getOrDefault(itemName, new ArrayList<>());
             list.removeIf(y -> y.getYear() == year);  // Remove existing entry for the same year if it exists
-            list.add(new YearlyValuesResponse(average, year));
+            list.add(new YearlyValuesResponse(average.multiply(hundred), year));
             responseMap.put(itemName, list);
         }
     }

@@ -182,23 +182,24 @@ public class StocksService {
 
         BigDecimal divYieldValue = BigDecimal.ZERO;
         BigDecimal payoutValue = BigDecimal.ZERO;
+        BigDecimal hundred = new BigDecimal(100);
         List<Dividends> dividends = dividendsRepository.findByStocksId(stocks.getId());
         if (!dividends.isEmpty()) {
             BigDecimal dividendValue = Optional.ofNullable(dividends.get(0).getValue()).orElse(BigDecimal.ZERO);
             divYieldValue = (value.compareTo(BigDecimal.ZERO) != 0) ? dividendValue.divide(value, scale, roundingMode) : BigDecimal.ZERO;
             payoutValue = (netProfit.compareTo(BigDecimal.ZERO) != 0) ? dividendValue.divide(netProfit, scale, roundingMode) : BigDecimal.ZERO;
         }
-        indicators.add(new IndicatorValueResponse("DIV YIELD", divYieldValue));
-        indicators.add(new IndicatorValueResponse("PAYOUT", payoutValue));
+        indicators.add(new IndicatorValueResponse("DIV YIELD", divYieldValue.multiply(hundred)));
+        indicators.add(new IndicatorValueResponse("PAYOUT", payoutValue.multiply(hundred)));
 
         BigDecimal netMarginValue = (netRevenue.compareTo(BigDecimal.ZERO) != 0) ? netProfit.divide(netRevenue, scale, roundingMode) : BigDecimal.ZERO;
-        indicators.add(new IndicatorValueResponse("MARGEM LÍQ", netMarginValue));
+        indicators.add(new IndicatorValueResponse("MARGEM LÍQ", netMarginValue.multiply(hundred)));
 
         BigDecimal grossMarginValue = (netRevenue.compareTo(BigDecimal.ZERO) != 0) ? Optional.ofNullable(balanceSheet[0].getGrossProfit()).orElse(BigDecimal.ZERO).divide(netRevenue, scale, roundingMode) : BigDecimal.ZERO;
-        indicators.add(new IndicatorValueResponse("MARGEM BRUTA", grossMarginValue));
+        indicators.add(new IndicatorValueResponse("MARGEM BRUTA", grossMarginValue.multiply(hundred)));
 
         BigDecimal ebitMarginValue = (netRevenue.compareTo(BigDecimal.ZERO) != 0) ? ebit.divide(netRevenue, scale, roundingMode) : BigDecimal.ZERO;
-        indicators.add(new IndicatorValueResponse("MARGEM EBIT", ebitMarginValue));
+        indicators.add(new IndicatorValueResponse("MARGEM EBIT", ebitMarginValue.multiply(hundred)));
 
         BigDecimal marketValue = value.multiply(numberOfPapers);
 
@@ -209,25 +210,25 @@ public class StocksService {
         indicators.add(new IndicatorValueResponse("EV/EBITDA", evEbitdaValue));
 
         BigDecimal roeValue = (equity.compareTo(BigDecimal.ZERO) != 0) ? netProfit.divide(equity, scale, roundingMode) : BigDecimal.ZERO;
-        indicators.add(new IndicatorValueResponse("ROE", roeValue));
+        indicators.add(new IndicatorValueResponse("ROE", roeValue.multiply(hundred)));
 
         BigDecimal roicValue = (liabilities.compareTo(BigDecimal.ZERO) != 0) ? ebit.divide(liabilities, scale, roundingMode) : BigDecimal.ZERO;
-        indicators.add(new IndicatorValueResponse("ROIC", roicValue));
+        indicators.add(new IndicatorValueResponse("ROIC", roicValue.multiply(hundred)));
 
         BigDecimal roaValue = (assets.compareTo(BigDecimal.ZERO) != 0) ? netProfit.divide(assets, scale, roundingMode) : BigDecimal.ZERO;
-        indicators.add(new IndicatorValueResponse("ROA", roaValue));
+        indicators.add(new IndicatorValueResponse("ROA", roaValue.multiply(hundred)));
 
         BigDecimal divLiqPatLiqValue = (equity.compareTo(BigDecimal.ZERO) != 0) ? netDebt.divide(equity, scale, roundingMode) : BigDecimal.ZERO;
-        indicators.add(new IndicatorValueResponse("DÍV LÍQ/PAT LÍQ", divLiqPatLiqValue));
+        indicators.add(new IndicatorValueResponse("DÍV LÍQ/PAT LÍQ", divLiqPatLiqValue.multiply(hundred)));
 
         BigDecimal divLiqEbit = (ebit.compareTo(BigDecimal.ZERO) != 0) ? netDebt.divide(ebit, scale, roundingMode) : BigDecimal.ZERO;
-        indicators.add(new IndicatorValueResponse("DÍV LÍQ/EBIT", divLiqEbit));
+        indicators.add(new IndicatorValueResponse("DÍV LÍQ/EBIT", divLiqEbit.multiply(hundred)));
 
         BigDecimal profitCagrValue = calculateProfitCAGR(findAllBalances);
-        indicators.add(new IndicatorValueResponse("CAGR LUCRO", profitCagrValue));
+        indicators.add(new IndicatorValueResponse("CAGR LUCRO", profitCagrValue.multiply(hundred)));
 
         BigDecimal cagrRecValue = calculateRevenueCAGR(findAllBalances);
-        indicators.add(new IndicatorValueResponse("CAGR REC", cagrRecValue));
+        indicators.add(new IndicatorValueResponse("CAGR REC", cagrRecValue.multiply(hundred)));
 
         return new IndicatorsResponse(indicators);
     }
