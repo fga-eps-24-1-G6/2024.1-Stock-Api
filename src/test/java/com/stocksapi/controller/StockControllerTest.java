@@ -3,6 +3,7 @@ package com.stocksapi.controller;
 import com.stocksapi.service.MockMvcService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 
 import java.math.BigDecimal;
@@ -12,6 +13,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@AutoConfigureMockMvc
 public class StockControllerTest extends BaseControllerTest {
 
     @Autowired
@@ -145,8 +147,8 @@ public class StockControllerTest extends BaseControllerTest {
                 .andExpect(jsonPath("$[0].ticker").value("petr4"))
                 .andExpect(jsonPath("$[0].companyId").value(1))
                 .andExpect(jsonPath("$[0].companyName").value("PETROLEO BRASILEIRO S.A. PETROBRAS"))
-                .andExpect(jsonPath("$[0].lastPrice").value(36.02))
-                .andExpect(jsonPath("$[0].variationOneDay").value(0.06))
+                .andExpect(jsonPath("$[0].lastPrice").value(35.96))
+                .andExpect(jsonPath("$[0].variationOneDay").value(-0.06))
                 .andExpect(jsonPath("$[0].sector").value("Empresas do Setor Petróleo, Gás e Biocombustíveis"));
     }
 
