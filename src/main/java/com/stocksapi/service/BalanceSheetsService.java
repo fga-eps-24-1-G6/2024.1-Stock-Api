@@ -1,8 +1,10 @@
 package com.stocksapi.service;
 
 import com.stocksapi.dto.BalanceSheetsResponse;
+import com.stocksapi.dto.YearlyBalanceSheet;
 import com.stocksapi.dto.YearlyValuesResponse;
 import com.stocksapi.exception.BadRequestNotFoundException;
+import com.stocksapi.helper.YearlyBalanceSheetMapper;
 import com.stocksapi.model.BalanceSheet;
 import com.stocksapi.repository.BalanceSheetsRepository;
 import org.springframework.stereotype.Service;
@@ -17,6 +19,147 @@ public class BalanceSheetsService {
 
     public BalanceSheetsService(BalanceSheetsRepository balanceSheetsRepository) {
         this.balanceSheetsRepository = balanceSheetsRepository;
+    }
+
+    public List<YearlyBalanceSheet> getYearlyByCompanyId(Integer companyId) {
+        List<Object[]> rawResults = balanceSheetsRepository.findYearlyByCompanyId(companyId);
+        if (rawResults.isEmpty()) {
+            throw new BadRequestNotFoundException(404, "Could not find Balance Sheets from Company with id: " + companyId);
+        }
+
+        return YearlyBalanceSheetMapper.mapToYearlyBalanceSheets(rawResults);
+    }
+
+    public List<List<Object>> getFormattedYearlyByCompanyId(Integer companyId) {
+        List<YearlyBalanceSheet> yearlyValues = this.getYearlyByCompanyId(companyId);
+
+        List<List<Object>> yearlySheet = new ArrayList<>();
+        List<Object> header = new ArrayList<>();
+        header.add("");
+        List<Object> yearlyNetRevenue = new ArrayList<>();
+        yearlyNetRevenue.add("Receita Líquida");
+        List<Object> yearlyNetProfit = new ArrayList<>();
+        yearlyNetProfit.add("Lucro Líquido");
+        List<Object> yearlyGrossProfit = new ArrayList<>();
+        yearlyGrossProfit.add("Lucro Bruto");
+        List<Object> yearlyEbit = new ArrayList<>();
+        yearlyEbit.add("EBIT");
+        List<Object> yearlyEbitda = new ArrayList<>();
+        yearlyEbitda.add("EBITDA");
+        List<Object> yearlyNetDebt = new ArrayList<>();
+        yearlyNetDebt.add("Dívida Líquida");
+        List<Object> yearlyGrossDebt = new ArrayList<>();
+        yearlyGrossDebt.add("Dívida Bruta");
+        List<Object> yearlyCosts = new ArrayList<>();
+        yearlyCosts.add("Custos");
+        List<Object> yearlyTaxes = new ArrayList<>();
+        yearlyTaxes.add("Impostos");
+        List<Object> yearlyEquity = new ArrayList<>();
+        yearlyEquity.add("Patrimônio Líquido");
+        List<Object> yearlyAssets = new ArrayList<>();
+        yearlyAssets.add("Ativos");
+        List<Object> yearlyLiabilities = new ArrayList<>();
+        yearlyLiabilities.add("Passivos");
+
+        for(YearlyBalanceSheet sheet : yearlyValues){
+            header.add(sheet.getYear());
+            yearlyNetRevenue.add(sheet.getNetRevenue());
+            yearlyNetProfit.add(sheet.getNetProfit());
+            yearlyGrossProfit.add(sheet.getGrossProfit());
+            yearlyEbit.add(sheet.getEbit());
+            yearlyEbitda.add(sheet.getEbitda());
+            yearlyNetDebt.add(sheet.getNetDebt());
+            yearlyGrossDebt.add(sheet.getGrossDebt());
+            yearlyCosts.add(sheet.getCosts());
+            yearlyTaxes.add(sheet.getTaxes());
+            yearlyEquity.add(sheet.getEquity());
+            yearlyAssets.add(sheet.getAssets());
+            yearlyLiabilities.add(sheet.getLiabilities());
+        }
+
+        yearlySheet.add(header);
+        yearlySheet.add(yearlyNetRevenue);
+        yearlySheet.add(yearlyNetProfit);
+        yearlySheet.add(yearlyGrossProfit);
+        yearlySheet.add(yearlyEbit);
+        yearlySheet.add(yearlyEbitda);
+        yearlySheet.add(yearlyNetDebt);
+        yearlySheet.add(yearlyGrossDebt);
+        yearlySheet.add(yearlyCosts);
+        yearlySheet.add(yearlyTaxes);
+        yearlySheet.add(yearlyEquity);
+        yearlySheet.add(yearlyAssets);
+        yearlySheet.add(yearlyLiabilities);
+
+        return yearlySheet;
+    }
+
+    public YearlyBalanceSheet getLastTwelveMonthsResultsByCompanyId(Integer companyId) {
+        BalanceSheet[] orderedBalanceSheets = balanceSheetsRepository.findLatestBalanceSheetByCompanyId(companyId);
+        BalanceSheet[] lastFour = new BalanceSheet[Math.min(orderedBalanceSheets.length, 4)];
+        System.arraycopy(orderedBalanceSheets, 0, lastFour, 0, lastFour.length);
+
+        YearlyBalanceSheet lastTwelveMonthsResults;
+
+        BigDecimal netRevenue = BigDecimal.ZERO;
+        BigDecimal costs = BigDecimal.ZERO;
+        BigDecimal grossProfit = BigDecimal.ZERO;
+        BigDecimal netProfit = BigDecimal.ZERO;
+        BigDecimal ebitda = BigDecimal.ZERO;
+        BigDecimal ebit = BigDecimal.ZERO;
+        BigDecimal taxes = BigDecimal.ZERO;
+
+        BigDecimal grossMargin = BigDecimal.ZERO;
+        BigDecimal netMargin = BigDecimal.ZERO;
+
+        int scale = 10;
+        for (BalanceSheet balanceSheet : lastFour) {
+            if(balanceSheet.getNetRevenue()!=null){
+                netRevenue = netRevenue.add(balanceSheet.getNetRevenue());
+            }
+            if(balanceSheet.getCosts()!=null){
+                costs = costs.add(balanceSheet.getCosts());
+            }
+            if(balanceSheet.getGrossProfit()!=null){
+                grossProfit = grossProfit.add(balanceSheet.getGrossProfit());
+            }
+            if(balanceSheet.getNetProfit()!=null){
+                netProfit = netProfit.add(balanceSheet.getNetProfit());
+            }
+            if(balanceSheet.getEbitda()!=null){
+                ebitda = ebitda.add(balanceSheet.getEbitda());
+            }
+            if(balanceSheet.getEbit()!=null){
+                ebit = ebit.add(balanceSheet.getEbit());
+            }
+            if(balanceSheet.getTaxes()!=null){
+                taxes = taxes.add(balanceSheet.getTaxes());
+            }
+            if(balanceSheet.getGrossProfit()!=null && balanceSheet.getNetRevenue()!=null){
+                grossMargin = grossMargin.add(calculateMargin(balanceSheet.getGrossProfit(), balanceSheet.getNetRevenue(), scale));
+            }
+            if(balanceSheet.getNetProfit()!=null && balanceSheet.getNetRevenue()!=null){
+                netMargin = netMargin.add(calculateMargin(balanceSheet.getNetProfit(), balanceSheet.getNetRevenue(), scale));
+            }
+        }
+
+        lastTwelveMonthsResults =  new YearlyBalanceSheet(
+                lastFour[0].getAssets(),
+                lastFour[0].getCash(),
+                costs,
+                ebit,
+                ebitda,
+                lastFour[0].getEquity(),
+                lastFour[0].getGrossDebt(),
+                grossProfit,
+                lastFour[0].getLiabilities(),
+                lastFour[0].getNetDebt(),
+                netProfit,
+                netRevenue,
+                taxes,
+                lastFour[0].getYear()
+        );
+        return lastTwelveMonthsResults;
     }
 
     public List<BalanceSheetsResponse> getByCompanyId(Integer companyId) {

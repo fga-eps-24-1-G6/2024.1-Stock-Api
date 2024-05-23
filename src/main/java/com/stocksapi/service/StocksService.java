@@ -28,13 +28,15 @@ public class StocksService {
     private final BalanceSheetsRepository balanceSheetsRepository;
     private final DividendsRepository dividendsRepository;
     private final CompaniesRepository companiesRepository;
+    private final BalanceSheetsService balanceSheetsService;
 
-    public StocksService(StockRepository stockRepository, PriceRepository priceRepository, BalanceSheetsRepository balanceSheetsRepository, DividendsRepository dividendsRepository, CompaniesRepository companiesRepository) {
+    public StocksService(StockRepository stockRepository, PriceRepository priceRepository, BalanceSheetsRepository balanceSheetsRepository, DividendsRepository dividendsRepository, CompaniesRepository companiesRepository, BalanceSheetsService balanceSheetsService) {
         this.stockRepository = stockRepository;
         this.priceRepository = priceRepository;
         this.balanceSheetsRepository = balanceSheetsRepository;
         this.dividendsRepository = dividendsRepository;
         this.companiesRepository = companiesRepository;
+        this.balanceSheetsService = balanceSheetsService;
     }
 
     public StocksResponse getStocksByTicker (String ticker) {
@@ -147,10 +149,9 @@ public class StocksService {
         Prices prices = priceRepository.findLatestPriceByStockId(stocks.getId())
                 .orElseThrow(() -> new BadRequestNotFoundException(404, "Could not find prices with ticker: " + ticker));
 
-        BalanceSheet[] balanceSheet = balanceSheetsRepository.findLatestByCompanyId(stocks.getCompanies().getId())
-                .orElseThrow(() -> new BadRequestNotFoundException(404, "Could not find balances sheet with ticker: " + ticker));
+        YearlyBalanceSheet lastTwelveMonthsResults = balanceSheetsService.getLastTwelveMonthsResultsByCompanyId(stocks.getCompanies().getId());
 
-        List<BalanceSheet> findAllBalances = balanceSheetsRepository.findAllByCompaniesId(stocks.getCompanies().getId());
+        List<YearlyBalanceSheet> yearlyBalances = balanceSheetsService.getYearlyByCompanyId(stocks.getCompanies().getId());
 
         List<IndicatorValueResponse> indicators = new ArrayList<>();
 
@@ -158,14 +159,14 @@ public class StocksService {
         RoundingMode roundingMode = RoundingMode.HALF_UP;
 
         BigDecimal value = Optional.ofNullable(prices.getValue()).orElse(BigDecimal.ZERO);
-        BigDecimal netProfit = Optional.ofNullable(balanceSheet[0].getNetProfit()).orElse(BigDecimal.ZERO);
-        BigDecimal equity = Optional.ofNullable(balanceSheet[0].getEquity()).orElse(BigDecimal.ZERO);
-        BigDecimal netRevenue = Optional.ofNullable(balanceSheet[0].getNetRevenue()).orElse(BigDecimal.ZERO);
-        BigDecimal ebit = Optional.ofNullable(balanceSheet[0].getEbit()).orElse(BigDecimal.ZERO);
-        BigDecimal ebitda = Optional.ofNullable(balanceSheet[0].getEbitda()).orElse(BigDecimal.ZERO);
-        BigDecimal assets = Optional.ofNullable(balanceSheet[0].getAssets()).orElse(BigDecimal.ZERO);
-        BigDecimal liabilities = Optional.ofNullable(balanceSheet[0].getLiabilities()).orElse(BigDecimal.ZERO);
-        BigDecimal netDebt = Optional.ofNullable(balanceSheet[0].getNetDebt()).orElse(BigDecimal.ZERO);
+        BigDecimal netProfit = Optional.ofNullable(lastTwelveMonthsResults.getNetProfit()).orElse(BigDecimal.ZERO);
+        BigDecimal equity = Optional.ofNullable(lastTwelveMonthsResults.getEquity()).orElse(BigDecimal.ZERO);
+        BigDecimal netRevenue = Optional.ofNullable(lastTwelveMonthsResults.getNetRevenue()).orElse(BigDecimal.ZERO);
+        BigDecimal ebit = Optional.ofNullable(lastTwelveMonthsResults.getEbit()).orElse(BigDecimal.ZERO);
+        BigDecimal ebitda = Optional.ofNullable(lastTwelveMonthsResults.getEbitda()).orElse(BigDecimal.ZERO);
+        BigDecimal assets = Optional.ofNullable(lastTwelveMonthsResults.getAssets()).orElse(BigDecimal.ZERO);
+        BigDecimal liabilities = Optional.ofNullable(lastTwelveMonthsResults.getLiabilities()).orElse(BigDecimal.ZERO);
+        BigDecimal netDebt = Optional.ofNullable(lastTwelveMonthsResults.getNetDebt()).orElse(BigDecimal.ZERO);
         BigDecimal numberOfPapers = Optional.ofNullable(stocks.getCompanies().getNumberOfPapers()).orElse(BigDecimal.ZERO);
 
         BigDecimal lpaValue = (numberOfPapers.compareTo(BigDecimal.ZERO) != 0) ? netProfit.divide(numberOfPapers, scale, roundingMode) : BigDecimal.ZERO;
@@ -195,7 +196,7 @@ public class StocksService {
         BigDecimal netMarginValue = (netRevenue.compareTo(BigDecimal.ZERO) != 0) ? netProfit.divide(netRevenue, scale, roundingMode) : BigDecimal.ZERO;
         indicators.add(new IndicatorValueResponse("MARGEM LÍQ", netMarginValue.multiply(hundred)));
 
-        BigDecimal grossMarginValue = (netRevenue.compareTo(BigDecimal.ZERO) != 0) ? Optional.ofNullable(balanceSheet[0].getGrossProfit()).orElse(BigDecimal.ZERO).divide(netRevenue, scale, roundingMode) : BigDecimal.ZERO;
+        BigDecimal grossMarginValue = (netRevenue.compareTo(BigDecimal.ZERO) != 0) ? Optional.ofNullable(lastTwelveMonthsResults.getGrossProfit()).orElse(BigDecimal.ZERO).divide(netRevenue, scale, roundingMode) : BigDecimal.ZERO;
         indicators.add(new IndicatorValueResponse("MARGEM BRUTA", grossMarginValue.multiply(hundred)));
 
         BigDecimal ebitMarginValue = (netRevenue.compareTo(BigDecimal.ZERO) != 0) ? ebit.divide(netRevenue, scale, roundingMode) : BigDecimal.ZERO;
@@ -219,15 +220,15 @@ public class StocksService {
         indicators.add(new IndicatorValueResponse("ROA", roaValue.multiply(hundred)));
 
         BigDecimal divLiqPatLiqValue = (equity.compareTo(BigDecimal.ZERO) != 0) ? netDebt.divide(equity, scale, roundingMode) : BigDecimal.ZERO;
-        indicators.add(new IndicatorValueResponse("DÍV LÍQ/PAT LÍQ", divLiqPatLiqValue.multiply(hundred)));
+        indicators.add(new IndicatorValueResponse("DÍV LÍQ/PAT LÍQ", divLiqPatLiqValue));
 
         BigDecimal divLiqEbit = (ebit.compareTo(BigDecimal.ZERO) != 0) ? netDebt.divide(ebit, scale, roundingMode) : BigDecimal.ZERO;
-        indicators.add(new IndicatorValueResponse("DÍV LÍQ/EBIT", divLiqEbit.multiply(hundred)));
+        indicators.add(new IndicatorValueResponse("DÍV LÍQ/EBIT", divLiqEbit));
 
-        BigDecimal profitCagrValue = calculateProfitCAGR(findAllBalances);
+        BigDecimal profitCagrValue = calculateProfitCAGR(lastTwelveMonthsResults, yearlyBalances);
         indicators.add(new IndicatorValueResponse("CAGR LUCRO", profitCagrValue.multiply(hundred)));
 
-        BigDecimal cagrRecValue = calculateRevenueCAGR(findAllBalances);
+        BigDecimal cagrRecValue = calculateRevenueCAGR(lastTwelveMonthsResults, yearlyBalances);
         indicators.add(new IndicatorValueResponse("CAGR REC", cagrRecValue.multiply(hundred)));
 
         return new IndicatorsResponse(indicators);
@@ -258,33 +259,25 @@ public class StocksService {
         return priceAtDate.map(Prices::getValue).orElse(BigDecimal.ZERO);
     }
 
-    public static BigDecimal calculateProfitCAGR(List<BalanceSheet> balances) {
-        BigDecimal last12MonthsProfit = BigDecimal.ZERO;
-        BigDecimal last5YearsProfit = BigDecimal.ZERO;
+    public static BigDecimal calculateProfitCAGR(YearlyBalanceSheet lastResults, List<YearlyBalanceSheet> yearlyBalances) {
+        BigDecimal last12MonthsProfit = lastResults.getNetProfit();
+        BigDecimal last5YearsProfit = yearlyBalances.get(4).getNetProfit();
         int numberOfYears = 5;
 
-        for (BalanceSheet balance : balances) {
-            last12MonthsProfit = last12MonthsProfit.add(balance.getNetProfit());
-        }
-
-        for (int i = 0; i < numberOfYears; i++) {
-            last5YearsProfit = last5YearsProfit.add(balances.get(i).getNetProfit());
+        if(last5YearsProfit==null){
+            return BigDecimal.ZERO;
         }
 
         return calculateCAGR(last5YearsProfit, last12MonthsProfit, numberOfYears);
     }
 
-    public static BigDecimal calculateRevenueCAGR(List<BalanceSheet> balances) {
-        BigDecimal last12MonthsRevenue = BigDecimal.ZERO;
-        BigDecimal last5YearsRevenue = BigDecimal.ZERO;
+    public static BigDecimal calculateRevenueCAGR(YearlyBalanceSheet lastResults, List<YearlyBalanceSheet> yearlyBalances) {
+        BigDecimal last12MonthsRevenue = lastResults.getNetRevenue();
+        BigDecimal last5YearsRevenue = yearlyBalances.get(4).getNetRevenue();
         int numberOfYears = 5;
 
-        for (BalanceSheet balance : balances) {
-            last12MonthsRevenue = last12MonthsRevenue.add(balance.getNetRevenue());
-        }
-
-        for (int i = 0; i < numberOfYears; i++) {
-            last5YearsRevenue = last5YearsRevenue.add(balances.get(i).getNetRevenue());
+        if(last5YearsRevenue==null){
+            return BigDecimal.ZERO;
         }
 
         return calculateCAGR(last5YearsRevenue, last12MonthsRevenue, numberOfYears);

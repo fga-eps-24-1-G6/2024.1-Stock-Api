@@ -30,4 +30,15 @@ public class BalanceSheetsController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ExceptionResponse(errorCode, message));
         }
     }
+
+    @GetMapping(value = "/yearly/{companyId}")
+    public ResponseEntity<?> getYearlyBalanceSheetsByCompanyId(@PathVariable Integer companyId) {
+        try {
+            return ResponseEntity.ok(balanceSheetsService.getFormattedYearlyByCompanyId(companyId));
+        } catch (BadRequestNotFoundException exception) {
+            int errorCode = 404;
+            String message = "Could not Balance Sheets with company id: " + companyId;
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ExceptionResponse(errorCode, message));
+        }
+    }
 }
