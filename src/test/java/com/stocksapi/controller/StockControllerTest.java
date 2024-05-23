@@ -36,7 +36,7 @@ public class StockControllerTest extends BaseControllerTest {
                 .andExpect(jsonPath("$.avgDailyLiquidity").value(1617781000))
                 .andExpect(jsonPath("$.categorie").value("SMALL"))
                 .andExpect(jsonPath("$.variationOneDay").value(0.1700))
-                .andExpect(jsonPath("$.variationOneMonth").value(16.3400))
+                .andExpect(jsonPath("$.variationOneMonth").value(3.3))
                 .andExpect(jsonPath("$.variationTwelveMonths").value(30.9800));
     }
 

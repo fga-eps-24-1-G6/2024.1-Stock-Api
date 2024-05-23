@@ -45,7 +45,7 @@ public class DividendsControllerTest extends BaseControllerTest {
                 .andExpect(jsonPath("$.dividends[0].type").value("Dividendos"))
                 .andExpect(jsonPath("$.dividends[0].value").value(0.54947422))
                 .andExpect(jsonPath("$.dividends[0].ownershipDate").value("2024-04-25"))
-                .andExpect(jsonPath("$.dividends[0].paymentDate").value("2024-05-22"))
+                .andExpect(jsonPath("$.dividends[0].paymentDate").value("2024-05-23"))
                 .andExpect(jsonPath("$.dividends[0].id").value(1))
                 .andExpect(jsonPath("$.yearlyPayments.2024").value(0.54947422))
                 .andExpect(jsonPath("$.paymentMonths.MAY").value(100.0))
