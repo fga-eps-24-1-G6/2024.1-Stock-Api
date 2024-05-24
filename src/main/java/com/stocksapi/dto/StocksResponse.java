@@ -13,6 +13,7 @@ public class StocksResponse {
     private String ticker;
     private BigDecimal currentPrice;
     private String companyName;
+    private Integer companyId;
     private BigDecimal freeFloat;
     private BigDecimal tagAlong;
     private BigInteger avgDailyLiquidity;
@@ -22,9 +23,10 @@ public class StocksResponse {
     private BigDecimal variationTwelveMonths;
     private List<PricesResponse> allPrices;
 
-    public StocksResponse(Stocks stocks, Prices prices, String categorie, BigDecimal variationOneDay, BigDecimal variationOneMonth, BigDecimal variationTwelveMonths, String companyName, List<PricesResponse> allPrices) {
+    public StocksResponse(Stocks stocks, Prices prices, String categorie, BigDecimal variationOneDay, BigDecimal variationOneMonth, BigDecimal variationTwelveMonths, String companyName, Integer companyId, List<PricesResponse> allPrices) {
         this.ticker = stocks.getTicker();
         this.companyName = companyName;
+        this.companyId = companyId;
         this.currentPrice = new PricesResponse(prices).getValue();
         this.freeFloat = stocks.getFreeFloat();
         this.tagAlong = stocks.getTagAlong();

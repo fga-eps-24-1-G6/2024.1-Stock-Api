@@ -28,13 +28,15 @@ public class StocksService {
     private final BalanceSheetsRepository balanceSheetsRepository;
     private final DividendsRepository dividendsRepository;
     private final CompaniesRepository companiesRepository;
+    private final BalanceSheetsService balanceSheetsService;
 
-    public StocksService(StockRepository stockRepository, PriceRepository priceRepository, BalanceSheetsRepository balanceSheetsRepository, DividendsRepository dividendsRepository, CompaniesRepository companiesRepository) {
+    public StocksService(StockRepository stockRepository, PriceRepository priceRepository, BalanceSheetsRepository balanceSheetsRepository, DividendsRepository dividendsRepository, CompaniesRepository companiesRepository, BalanceSheetsService balanceSheetsService) {
         this.stockRepository = stockRepository;
         this.priceRepository = priceRepository;
         this.balanceSheetsRepository = balanceSheetsRepository;
         this.dividendsRepository = dividendsRepository;
         this.companiesRepository = companiesRepository;
+        this.balanceSheetsService = balanceSheetsService;
     }
 
     public StocksResponse getStocksByTicker (String ticker) {
@@ -72,7 +74,7 @@ public class StocksService {
         BigDecimal priceTwelveMonthsAgo = getPriceXMonthsAgo(findAllPrices, 12);
         BigDecimal variationTwelveMonths = calculateVariation(currentPrice, priceTwelveMonthsAgo);
 
-        return new StocksResponse(stocks, prices, categorie, variationOneDay, variationOneMonth, variationTwelveMonths, stocks.getCompanies().getName(), pricesResponseList);
+        return new StocksResponse(stocks, prices, categorie, variationOneDay, variationOneMonth, variationTwelveMonths, stocks.getCompanies().getName(), stocks.getCompanies().getId(), pricesResponseList);
     }
 
     public static PricesResponse toPricesResponse(Prices prices) {
@@ -147,90 +149,91 @@ public class StocksService {
         Prices prices = priceRepository.findLatestPriceByStockId(stocks.getId())
                 .orElseThrow(() -> new BadRequestNotFoundException(404, "Could not find prices with ticker: " + ticker));
 
-        BalanceSheet[] balanceSheet = balanceSheetsRepository.findLatestByCompanyId(stocks.getCompanies().getId())
-                .orElseThrow(() -> new BadRequestNotFoundException(404, "Could not find balances sheet with ticker: " + ticker));
+        YearlyBalanceSheet lastTwelveMonthsResults = balanceSheetsService.getLastTwelveMonthsResultsByCompanyId(stocks.getCompanies().getId());
 
-        List<BalanceSheet> findAllBalances = balanceSheetsRepository.findAllByCompaniesId(stocks.getCompanies().getId());
+        List<YearlyBalanceSheet> yearlyBalances = balanceSheetsService.getYearlyByCompanyId(stocks.getCompanies().getId());
 
         List<IndicatorValueResponse> indicators = new ArrayList<>();
 
         int scale = 10;
         RoundingMode roundingMode = RoundingMode.HALF_UP;
 
-        BigDecimal value = prices.getValue();
-        BigDecimal netProfit = balanceSheet[0].getNetProfit();
-        BigDecimal equity = balanceSheet[0].getEquity();
-        BigDecimal netRevenue = balanceSheet[0].getNetRevenue();
-        BigDecimal ebit = balanceSheet[0].getEbit();
-        BigDecimal ebitda = balanceSheet[0].getEbitda();
-        BigDecimal assets = balanceSheet[0].getAssets();
-        BigDecimal liabilities = balanceSheet[0].getLiabilities();
-        BigDecimal netDebt = balanceSheet[0].getNetDebt();
-        BigDecimal numberOfPapers = stocks.getCompanies().getNumberOfPapers();
+        BigDecimal value = Optional.ofNullable(prices.getValue()).orElse(BigDecimal.ZERO);
+        BigDecimal netProfit = Optional.ofNullable(lastTwelveMonthsResults.getNetProfit()).orElse(BigDecimal.ZERO);
+        BigDecimal equity = Optional.ofNullable(lastTwelveMonthsResults.getEquity()).orElse(BigDecimal.ZERO);
+        BigDecimal netRevenue = Optional.ofNullable(lastTwelveMonthsResults.getNetRevenue()).orElse(BigDecimal.ZERO);
+        BigDecimal ebit = Optional.ofNullable(lastTwelveMonthsResults.getEbit()).orElse(BigDecimal.ZERO);
+        BigDecimal ebitda = Optional.ofNullable(lastTwelveMonthsResults.getEbitda()).orElse(BigDecimal.ZERO);
+        BigDecimal assets = Optional.ofNullable(lastTwelveMonthsResults.getAssets()).orElse(BigDecimal.ZERO);
+        BigDecimal liabilities = Optional.ofNullable(lastTwelveMonthsResults.getLiabilities()).orElse(BigDecimal.ZERO);
+        BigDecimal netDebt = Optional.ofNullable(lastTwelveMonthsResults.getNetDebt()).orElse(BigDecimal.ZERO);
+        BigDecimal numberOfPapers = Optional.ofNullable(stocks.getCompanies().getNumberOfPapers()).orElse(BigDecimal.ZERO);
 
-        BigDecimal lpaValue = netProfit.divide(numberOfPapers, scale, roundingMode);
+        BigDecimal lpaValue = (numberOfPapers.compareTo(BigDecimal.ZERO) != 0) ? netProfit.divide(numberOfPapers, scale, roundingMode) : BigDecimal.ZERO;
         indicators.add(new IndicatorValueResponse("LPA", lpaValue));
 
-        BigDecimal plValue = value.divide(lpaValue, scale, roundingMode);
+        BigDecimal plValue = (lpaValue.compareTo(BigDecimal.ZERO) != 0) ? value.divide(lpaValue, scale, roundingMode) : BigDecimal.ZERO;
         indicators.add(new IndicatorValueResponse("P/L", plValue));
 
-        BigDecimal vpaValue = equity.divide(numberOfPapers, scale, roundingMode);
+        BigDecimal vpaValue = (numberOfPapers.compareTo(BigDecimal.ZERO) != 0) ? equity.divide(numberOfPapers, scale, roundingMode) : BigDecimal.ZERO;
         indicators.add(new IndicatorValueResponse("VPA", vpaValue));
 
-        BigDecimal pvpValue = value.divide(vpaValue, scale, roundingMode);
+        BigDecimal pvpValue = (vpaValue.compareTo(BigDecimal.ZERO) != 0) ? value.divide(vpaValue, scale, roundingMode) : BigDecimal.ZERO;
         indicators.add(new IndicatorValueResponse("P/VP", pvpValue));
 
         BigDecimal divYieldValue = BigDecimal.ZERO;
         BigDecimal payoutValue = BigDecimal.ZERO;
+        BigDecimal hundred = new BigDecimal(100);
         List<Dividends> dividends = dividendsRepository.findByStocksId(stocks.getId());
-        if (dividends.isEmpty()) {
-            BigDecimal dividendValue = dividends.get(0).getValue();
-            divYieldValue = dividendValue.divide(value, scale, roundingMode);
-            payoutValue = dividendValue.divide(netProfit, scale, roundingMode);
+        if (!dividends.isEmpty()) {
+            BigDecimal dividendValue = Optional.ofNullable(dividends.get(0).getValue()).orElse(BigDecimal.ZERO);
+            divYieldValue = (value.compareTo(BigDecimal.ZERO) != 0) ? dividendValue.divide(value, scale, roundingMode) : BigDecimal.ZERO;
+            payoutValue = (netProfit.compareTo(BigDecimal.ZERO) != 0) ? dividendValue.divide(netProfit, scale, roundingMode) : BigDecimal.ZERO;
         }
-        indicators.add(new IndicatorValueResponse("DIV YIELD", divYieldValue));
-        indicators.add(new IndicatorValueResponse("PAYOUT", payoutValue));
+        indicators.add(new IndicatorValueResponse("DIV YIELD", divYieldValue.multiply(hundred)));
+        indicators.add(new IndicatorValueResponse("PAYOUT", payoutValue.multiply(hundred)));
 
-        BigDecimal netMarginValue = netProfit.divide(netRevenue, scale, roundingMode);
-        indicators.add(new IndicatorValueResponse("MARGEM LÍQ", netMarginValue));
+        BigDecimal netMarginValue = (netRevenue.compareTo(BigDecimal.ZERO) != 0) ? netProfit.divide(netRevenue, scale, roundingMode) : BigDecimal.ZERO;
+        indicators.add(new IndicatorValueResponse("MARGEM LÍQ", netMarginValue.multiply(hundred)));
 
-        BigDecimal grossMarginValue = balanceSheet[0].getGrossProfit().divide(netRevenue, scale, roundingMode);
-        indicators.add(new IndicatorValueResponse("MARGEM BRUTA", grossMarginValue));
+        BigDecimal grossMarginValue = (netRevenue.compareTo(BigDecimal.ZERO) != 0) ? Optional.ofNullable(lastTwelveMonthsResults.getGrossProfit()).orElse(BigDecimal.ZERO).divide(netRevenue, scale, roundingMode) : BigDecimal.ZERO;
+        indicators.add(new IndicatorValueResponse("MARGEM BRUTA", grossMarginValue.multiply(hundred)));
 
-        BigDecimal ebitMarginValue = ebit.divide(netRevenue, scale, roundingMode);
-        indicators.add(new IndicatorValueResponse("MARGEM EBIT", ebitMarginValue));
+        BigDecimal ebitMarginValue = (netRevenue.compareTo(BigDecimal.ZERO) != 0) ? ebit.divide(netRevenue, scale, roundingMode) : BigDecimal.ZERO;
+        indicators.add(new IndicatorValueResponse("MARGEM EBIT", ebitMarginValue.multiply(hundred)));
 
         BigDecimal marketValue = value.multiply(numberOfPapers);
 
-        BigDecimal evEbitValue = marketValue.divide(ebit, scale, roundingMode);
+        BigDecimal evEbitValue = (ebit.compareTo(BigDecimal.ZERO) != 0) ? marketValue.divide(ebit, scale, roundingMode) : BigDecimal.ZERO;
         indicators.add(new IndicatorValueResponse("EV/EBIT", evEbitValue));
 
-        BigDecimal evEbitdaValue = marketValue.divide(ebitda, scale, roundingMode);
+        BigDecimal evEbitdaValue = (ebitda.compareTo(BigDecimal.ZERO) != 0) ? marketValue.divide(ebitda, scale, roundingMode) : BigDecimal.ZERO;
         indicators.add(new IndicatorValueResponse("EV/EBITDA", evEbitdaValue));
 
-        BigDecimal roeValue = netProfit.divide(equity, scale, roundingMode);
-        indicators.add(new IndicatorValueResponse("ROE", roeValue));
+        BigDecimal roeValue = (equity.compareTo(BigDecimal.ZERO) != 0) ? netProfit.divide(equity, scale, roundingMode) : BigDecimal.ZERO;
+        indicators.add(new IndicatorValueResponse("ROE", roeValue.multiply(hundred)));
 
-        BigDecimal roicValue = ebit.divide(liabilities, scale, roundingMode);
-        indicators.add(new IndicatorValueResponse("ROIC", roicValue));
+        BigDecimal roicValue = (liabilities.compareTo(BigDecimal.ZERO) != 0) ? ebit.divide(liabilities, scale, roundingMode) : BigDecimal.ZERO;
+        indicators.add(new IndicatorValueResponse("ROIC", roicValue.multiply(hundred)));
 
-        BigDecimal roaValue = netProfit.divide(assets, scale, roundingMode);
-        indicators.add(new IndicatorValueResponse("ROA", roaValue));
+        BigDecimal roaValue = (assets.compareTo(BigDecimal.ZERO) != 0) ? netProfit.divide(assets, scale, roundingMode) : BigDecimal.ZERO;
+        indicators.add(new IndicatorValueResponse("ROA", roaValue.multiply(hundred)));
 
-        BigDecimal divLiqPatLiqValue = netDebt.divide(equity, scale, roundingMode);
+        BigDecimal divLiqPatLiqValue = (equity.compareTo(BigDecimal.ZERO) != 0) ? netDebt.divide(equity, scale, roundingMode) : BigDecimal.ZERO;
         indicators.add(new IndicatorValueResponse("DÍV LÍQ/PAT LÍQ", divLiqPatLiqValue));
 
-        BigDecimal divLiqEbit = netDebt.divide(ebit, scale, roundingMode);
+        BigDecimal divLiqEbit = (ebit.compareTo(BigDecimal.ZERO) != 0) ? netDebt.divide(ebit, scale, roundingMode) : BigDecimal.ZERO;
         indicators.add(new IndicatorValueResponse("DÍV LÍQ/EBIT", divLiqEbit));
 
-        BigDecimal profitCagrValue = calculateProfitCAGR(findAllBalances);
-        indicators.add(new IndicatorValueResponse("CAGR LUCRO", profitCagrValue));
+        BigDecimal profitCagrValue = calculateProfitCAGR(lastTwelveMonthsResults, yearlyBalances);
+        indicators.add(new IndicatorValueResponse("CAGR LUCRO", profitCagrValue.multiply(hundred)));
 
-        BigDecimal cagrRecValue = calculateRevenueCAGR(findAllBalances);
-        indicators.add(new IndicatorValueResponse("CAGR REC", cagrRecValue));
+        BigDecimal cagrRecValue = calculateRevenueCAGR(lastTwelveMonthsResults, yearlyBalances);
+        indicators.add(new IndicatorValueResponse("CAGR REC", cagrRecValue.multiply(hundred)));
 
         return new IndicatorsResponse(indicators);
     }
+
 
     private static BigDecimal calculateVariation(BigDecimal current, BigDecimal previous) {
         return current.subtract(previous)
@@ -256,33 +259,25 @@ public class StocksService {
         return priceAtDate.map(Prices::getValue).orElse(BigDecimal.ZERO);
     }
 
-    public static BigDecimal calculateProfitCAGR(List<BalanceSheet> balances) {
-        BigDecimal last12MonthsProfit = BigDecimal.ZERO;
-        BigDecimal last5YearsProfit = BigDecimal.ZERO;
+    public static BigDecimal calculateProfitCAGR(YearlyBalanceSheet lastResults, List<YearlyBalanceSheet> yearlyBalances) {
+        BigDecimal last12MonthsProfit = lastResults.getNetProfit();
+        BigDecimal last5YearsProfit = yearlyBalances.get(4).getNetProfit();
         int numberOfYears = 5;
 
-        for (BalanceSheet balance : balances) {
-            last12MonthsProfit = last12MonthsProfit.add(balance.getNetProfit());
-        }
-
-        for (int i = 0; i < numberOfYears; i++) {
-            last5YearsProfit = last5YearsProfit.add(balances.get(i).getNetProfit());
+        if(last5YearsProfit==null){
+            return BigDecimal.ZERO;
         }
 
         return calculateCAGR(last5YearsProfit, last12MonthsProfit, numberOfYears);
     }
 
-    public static BigDecimal calculateRevenueCAGR(List<BalanceSheet> balances) {
-        BigDecimal last12MonthsRevenue = BigDecimal.ZERO;
-        BigDecimal last5YearsRevenue = BigDecimal.ZERO;
+    public static BigDecimal calculateRevenueCAGR(YearlyBalanceSheet lastResults, List<YearlyBalanceSheet> yearlyBalances) {
+        BigDecimal last12MonthsRevenue = lastResults.getNetRevenue();
+        BigDecimal last5YearsRevenue = yearlyBalances.get(4).getNetRevenue();
         int numberOfYears = 5;
 
-        for (BalanceSheet balance : balances) {
-            last12MonthsRevenue = last12MonthsRevenue.add(balance.getNetRevenue());
-        }
-
-        for (int i = 0; i < numberOfYears; i++) {
-            last5YearsRevenue = last5YearsRevenue.add(balances.get(i).getNetRevenue());
+        if(last5YearsRevenue==null){
+            return BigDecimal.ZERO;
         }
 
         return calculateCAGR(last5YearsRevenue, last12MonthsRevenue, numberOfYears);
