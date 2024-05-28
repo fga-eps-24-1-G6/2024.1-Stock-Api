@@ -11,7 +11,7 @@ ADD . $HOME
 
 # Intermediate build
 FROM base as builder
-RUN mvn clean package -DskipTests
+RUN mvn clean package
 
 # Run
 FROM eclipse-temurin:11-jdk-alpine as runner
