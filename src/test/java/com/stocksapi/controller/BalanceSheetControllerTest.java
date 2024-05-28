@@ -58,17 +58,19 @@ public class BalanceSheetControllerTest extends BaseControllerTest {
                 .andExpect(jsonPath("$[4].yearlyValues.[1].year").isNumber())
                 .andExpect(jsonPath("$[4].yearlyValues.[1].value").isNumber())
 
-                .andExpect(jsonPath("$[5].item").value("EBITDA"))
+                .andExpect(jsonPath("$[5].item").value("Margem Bruta"))
                 .andExpect(jsonPath("$[5].yearlyValues.[0].year").isNumber())
                 .andExpect(jsonPath("$[5].yearlyValues.[0].value").isNumber())
                 .andExpect(jsonPath("$[5].yearlyValues.[1].year").isNumber())
                 .andExpect(jsonPath("$[5].yearlyValues.[1].value").isNumber())
 
-                .andExpect(jsonPath("$[6].item").value("Margem Bruta"))
+                .andExpect(jsonPath("$[6].item").value("EBITDA"))
                 .andExpect(jsonPath("$[6].yearlyValues.[0].year").isNumber())
                 .andExpect(jsonPath("$[6].yearlyValues.[0].value").isNumber())
                 .andExpect(jsonPath("$[6].yearlyValues.[1].year").isNumber())
                 .andExpect(jsonPath("$[6].yearlyValues.[1].value").isNumber())
+
+
 
                 .andExpect(jsonPath("$[7].item").value("EBIT"))
                 .andExpect(jsonPath("$[7].yearlyValues.[0].year").isNumber())
